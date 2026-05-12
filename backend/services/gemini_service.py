@@ -33,6 +33,10 @@ def generate_guidance(disease: str, language: str) -> dict:
     settings = get_settings()
     provider_errors: list[str] = []
 
+    lowered_disease = disease.lower()
+    if "background" in lowered_disease or "without_leaves" in lowered_disease or "without leaves" in lowered_disease:
+        return get_local_guidance(disease)
+
     if settings.gemini_api_key:
         try:
             import google.generativeai as genai

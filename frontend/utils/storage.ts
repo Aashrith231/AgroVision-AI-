@@ -19,8 +19,17 @@ export function saveScanRecord(record: Omit<ScanRecord, "id" | "createdAt">) {
     id: crypto.randomUUID(),
     createdAt: new Date().toISOString()
   };
-  const history = [next, ...getScanHistory()].slice(0, 30);
-  window.localStorage.setItem(HISTORY_KEY, JSON.stringify(history));
+  const history = [next, ...getScanHistory()].slice(0, 20);
+  try {
+    window.localStorage.setItem(HISTORY_KEY, JSON.stringify(history));
+  } catch {
+    const compactHistory = [{ ...next, imageDataUrl: undefined }, ...getScanHistory().map((item) => ({ ...item, imageDataUrl: undefined }))].slice(0, 10);
+    try {
+      window.localStorage.setItem(HISTORY_KEY, JSON.stringify(compactHistory));
+    } catch {
+      window.localStorage.removeItem(HISTORY_KEY);
+    }
+  }
 }
 
 export function clearScanHistory() {
@@ -59,7 +68,25 @@ export function updateReminder(id: string, updates: Partial<FollowUpReminder>) {
 export function fileToDataUrl(file: File): Promise<string> {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
-    reader.onload = () => resolve(String(reader.result));
+    reader.onload = () => {
+      const image = new Image();
+      image.onload = () => {
+        const maxSize = 420;
+        const scale = Math.min(1, maxSize / Math.max(image.width, image.height));
+        const canvas = document.createElement("canvas");
+        canvas.width = Math.max(1, Math.round(image.width * scale));
+        canvas.height = Math.max(1, Math.round(image.height * scale));
+        const context = canvas.getContext("2d");
+        if (!context) {
+          resolve(String(reader.result));
+          return;
+        }
+        context.drawImage(image, 0, 0, canvas.width, canvas.height);
+        resolve(canvas.toDataURL("image/jpeg", 0.58));
+      };
+      image.onerror = () => resolve(String(reader.result));
+      image.src = String(reader.result);
+    };
     reader.onerror = () => reject(reader.error);
     reader.readAsDataURL(file);
   });

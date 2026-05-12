@@ -64,6 +64,11 @@ export function ResultsPanel({
   }
 
   const alternativePredictions = prediction.top_predictions.slice(1, 3);
+  const isBackground =
+    prediction.disease.toLowerCase().includes("background") ||
+    prediction.disease.toLowerCase().includes("without_leaves") ||
+    prediction.disease.toLowerCase().includes("without leaves");
+  const predictedTitle = isBackground ? "No clear leaf detected" : displayDiseaseName(prediction.disease);
 
   return (
     <section className="bg-leaf-50 py-14 sm:py-20">
@@ -72,9 +77,11 @@ export function ResultsPanel({
           <div className="flex items-start justify-between gap-4">
             <div>
               <p className="text-sm font-black uppercase tracking-[0.18em] text-leaf-600">Prediction</p>
-              <h2 className="mt-2 text-3xl font-black text-leaf-900">{displayDiseaseName(prediction.disease)}</h2>
+              <h2 className="mt-2 text-3xl font-black text-leaf-900">{predictedTitle}</h2>
               <p className="mt-2 text-sm font-semibold leading-6 text-green-950/64">
-                AgroVision AI identified this as the most likely disease from the uploaded leaf image.
+                {isBackground
+                  ? "Please upload a close-up photo of a clear plant leaf for disease diagnosis."
+                  : "AgroVision AI identified this as the most likely disease from the uploaded leaf image."}
               </p>
             </div>
             <CheckCircle2 className="h-8 w-8 text-leaf-600" />
@@ -87,7 +94,9 @@ export function ResultsPanel({
               </div>
               <div>
                 <h3 className="font-black text-leaf-900">AI leaf analysis</h3>
-                <p className="text-sm font-semibold text-green-950/64">Guidance is prepared from the predicted condition.</p>
+                <p className="text-sm font-semibold text-green-950/64">
+                  {isBackground ? "Retake the image with one leaf centered in good light." : "Guidance is prepared from the predicted condition."}
+                </p>
               </div>
             </div>
           </div>
@@ -144,79 +153,83 @@ export function ResultsPanel({
               <GuidanceList title={labels.treatment} items={guidance.treatment} />
             </div>
 
-            <div className="mt-5 rounded-2xl border border-leaf-100 bg-white p-4">
-              <h3 className="font-black text-leaf-900">Severity checker</h3>
-              <div className="mt-3 grid gap-3 sm:grid-cols-3">
-                <SeveritySelect
-                  label="Leaves affected"
-                  value={severityInput.affectedLeaves}
-                  options={[
-                    ["few", "Few leaves"],
-                    ["many", "Many leaves"],
-                    ["most", "Most leaves"]
-                  ]}
-                  onChange={(value) => setSeverityInput((current) => ({ ...current, affectedLeaves: value as SeverityInput["affectedLeaves"] }))}
-                />
-                <SeveritySelect
-                  label="Spread"
-                  value={severityInput.spread}
-                  options={[
-                    ["no", "Not spreading"],
-                    ["slow", "Slow spread"],
-                    ["fast", "Fast spread"]
-                  ]}
-                  onChange={(value) => setSeverityInput((current) => ({ ...current, spread: value as SeverityInput["spread"] }))}
-                />
-                <SeveritySelect
-                  label="Fruit/stem"
-                  value={severityInput.fruitOrStem}
-                  options={[
-                    ["no", "Not affected"],
-                    ["yes", "Affected"]
-                  ]}
-                  onChange={(value) => setSeverityInput((current) => ({ ...current, fruitOrStem: value as SeverityInput["fruitOrStem"] }))}
-                />
+            {!isBackground && (
+              <div className="mt-5 rounded-2xl border border-leaf-100 bg-white p-4">
+                <h3 className="font-black text-leaf-900">Severity checker</h3>
+                <div className="mt-3 grid gap-3 sm:grid-cols-3">
+                  <SeveritySelect
+                    label="Leaves affected"
+                    value={severityInput.affectedLeaves}
+                    options={[
+                      ["few", "Few leaves"],
+                      ["many", "Many leaves"],
+                      ["most", "Most leaves"]
+                    ]}
+                    onChange={(value) => setSeverityInput((current) => ({ ...current, affectedLeaves: value as SeverityInput["affectedLeaves"] }))}
+                  />
+                  <SeveritySelect
+                    label="Spread"
+                    value={severityInput.spread}
+                    options={[
+                      ["no", "Not spreading"],
+                      ["slow", "Slow spread"],
+                      ["fast", "Fast spread"]
+                    ]}
+                    onChange={(value) => setSeverityInput((current) => ({ ...current, spread: value as SeverityInput["spread"] }))}
+                  />
+                  <SeveritySelect
+                    label="Fruit/stem"
+                    value={severityInput.fruitOrStem}
+                    options={[
+                      ["no", "Not affected"],
+                      ["yes", "Affected"]
+                    ]}
+                    onChange={(value) => setSeverityInput((current) => ({ ...current, fruitOrStem: value as SeverityInput["fruitOrStem"] }))}
+                  />
+                </div>
+                <div className="mt-4 rounded-2xl bg-leaf-50 p-4">
+                  <p className="font-black text-leaf-900">{severity.level} severity</p>
+                  <p className="mt-1 text-sm font-semibold leading-6 text-green-950/72">{severity.recommendation}</p>
+                </div>
               </div>
-              <div className="mt-4 rounded-2xl bg-leaf-50 p-4">
-                <p className="font-black text-leaf-900">{severity.level} severity</p>
-                <p className="mt-1 text-sm font-semibold leading-6 text-green-950/72">{severity.recommendation}</p>
-              </div>
-            </div>
+            )}
 
             <div className="mt-5 rounded-2xl bg-leaf-50 p-4">
               <h3 className="font-black text-leaf-900">{labels.advice}</h3>
               <p className="mt-2 text-sm leading-6 text-green-950/72">{guidance.farmer_advice}</p>
             </div>
 
-            <div className="mt-5 grid gap-3 sm:grid-cols-2">
-              <button
-                type="button"
-                onClick={onKnowMore}
-                className="inline-flex items-center justify-center gap-2 rounded-2xl border border-leaf-200 bg-white px-5 py-3 font-black text-leaf-900 transition hover:border-leaf-500 hover:bg-leaf-50"
-              >
-                <BookOpen className="h-5 w-5 text-leaf-600" />
-                {labels.knowMore}
-              </button>
-              <button
-                type="button"
-                onClick={() => {
-                  const dueAt = new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toISOString();
-                  saveReminder({
-                    disease: prediction.disease,
-                    dueAt,
-                    note: `Recheck ${prediction.disease} after treatment and field cleanup.`
-                  });
-                  setReminderSaved(true);
-                  if ("Notification" in window && Notification.permission === "default") {
-                    Notification.requestPermission().catch(() => undefined);
-                  }
-                }}
-                className="inline-flex items-center justify-center gap-2 rounded-2xl bg-leaf-600 px-5 py-3 font-black text-white transition hover:bg-leaf-700"
-              >
-                <Bell className="h-5 w-5" />
-                {reminderSaved ? "Follow-up saved" : "Remind in 3 days"}
-              </button>
-            </div>
+            {!isBackground && (
+              <div className="mt-5 grid gap-3 sm:grid-cols-2">
+                <button
+                  type="button"
+                  onClick={onKnowMore}
+                  className="inline-flex items-center justify-center gap-2 rounded-2xl border border-leaf-200 bg-white px-5 py-3 font-black text-leaf-900 transition hover:border-leaf-500 hover:bg-leaf-50"
+                >
+                  <BookOpen className="h-5 w-5 text-leaf-600" />
+                  {labels.knowMore}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    const dueAt = new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toISOString();
+                    saveReminder({
+                      disease: prediction.disease,
+                      dueAt,
+                      note: `Recheck ${prediction.disease} after treatment and field cleanup.`
+                    });
+                    setReminderSaved(true);
+                    if ("Notification" in window && Notification.permission === "default") {
+                      Notification.requestPermission().catch(() => undefined);
+                    }
+                  }}
+                  className="inline-flex items-center justify-center gap-2 rounded-2xl bg-leaf-600 px-5 py-3 font-black text-white transition hover:bg-leaf-700"
+                >
+                  <Bell className="h-5 w-5" />
+                  {reminderSaved ? "Follow-up saved" : "Remind in 3 days"}
+                </button>
+              </div>
+            )}
 
             <div className="mt-5 grid gap-3 sm:grid-cols-[1fr_auto]">
               <label className="relative">
