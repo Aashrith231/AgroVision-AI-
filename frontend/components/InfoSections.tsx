@@ -7,17 +7,17 @@ type Props = {
 };
 
 const features = [
-  { icon: BrainCircuit, title: "CNN model inference", text: "Loads saved .h5 models and returns top-3 confidence." },
+  { icon: BrainCircuit, title: "CNN model inference", text: "Loads saved .h5 models and identifies the most likely disease." },
   { icon: Sprout, title: "AI farmer guidance", text: "Gemini first, local Ollama second, and dictionary fallback last." },
   { icon: CloudSun, title: "Local weather risk", text: "Free Open-Meteo weather checks for humidity, rain, heat, and wind." },
-  { icon: History, title: "Scan history", text: "Saves recent scans, leaf images, confidence, and advice on this device." },
+  { icon: History, title: "Scan history", text: "Saves recent scans, leaf images, predictions, and advice on this device." },
   { icon: BookOpen, title: "Disease library", text: "Browse all 36 trained classes with detail pages and field checklists." },
   { icon: ShieldCheck, title: "Severity checker", text: "Turns field observations into low, medium, or high severity advice." },
   { icon: Bell, title: "Follow-up reminders", text: "Save a 3-day recheck reminder after diagnosis." },
   { icon: Languages, title: "Three languages", text: "English, Hindi, and Telugu UI with multilingual guidance." }
 ];
 
-const steps = ["Upload or capture a leaf image", "CNN model predicts disease and confidence", "Gemini prepares farmer-friendly advice", "Listen or share the result on WhatsApp"];
+const steps = ["Upload or capture a leaf image", "CNN model predicts the disease", "AI prepares farmer-friendly advice", "Listen or share the result on WhatsApp"];
 const crops = ["Apple", "Corn", "Grape", "Potato", "Tomato", "Cherry", "Peach", "Pepper", "Strawberry", "Soybean", "Squash", "Orange"];
 
 export function InfoSections({ featuresTitle, howTitle, cropsTitle }: Props) {

@@ -33,7 +33,7 @@ export function Hero({ title, subtitle }: Props) {
           <div className="mt-7 grid max-w-2xl grid-cols-3 gap-2 sm:gap-3">
             <HeroStat value="36" label="trained classes" />
             <HeroStat value="3" label="languages" />
-            <HeroStat value="Top-3" label="CNN confidence" />
+            <HeroStat value="AI" label="leaf analysis" />
           </div>
         </motion.div>
 
@@ -47,7 +47,7 @@ export function Hero({ title, subtitle }: Props) {
             <div className="rounded-2xl bg-[linear-gradient(145deg,rgba(255,255,255,0.18),rgba(255,255,255,0.04))] p-3 sm:aspect-[4/3] sm:p-5">
               <div className="grid h-full grid-cols-2 gap-3">
                 <FeatureTile icon={Camera} title="Leaf image" text="JPG or PNG scan" />
-                <FeatureTile icon={Sparkles} title="CNN result" text="Top-3 confidence" />
+                <FeatureTile icon={Sparkles} title="CNN result" text="Disease prediction" />
                 <FeatureTile icon={Mic2} title="Voice help" text="Local language" />
                 <FeatureTile icon={MessageCircle} title="WhatsApp" text="Share advice" />
               </div>
@@ -57,9 +57,9 @@ export function Hero({ title, subtitle }: Props) {
             <div className="rounded-2xl bg-white px-4 py-3">
               <div className="flex items-center gap-2 text-sm font-black text-leaf-900">
                 <ShieldCheck className="h-4 w-4 text-leaf-600" />
-                Confidence bands
+                Field guidance
               </div>
-              <p className="mt-1 text-xs leading-5 text-green-950/62">High, uncertain, and out-of-dataset warnings.</p>
+              <p className="mt-1 text-xs leading-5 text-green-950/62">Clear advice without overwhelming technical details.</p>
             </div>
             <div className="rounded-2xl bg-white px-4 py-3">
               <div className="flex items-center gap-2 text-sm font-black text-leaf-900">

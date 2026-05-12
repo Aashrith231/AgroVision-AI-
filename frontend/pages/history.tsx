@@ -9,7 +9,6 @@ import { Language } from "../i18n/translations";
 import { useTranslation } from "../hooks/useTranslation";
 import { FollowUpReminder, ScanRecord } from "../types";
 import { displayDiseaseName, diseaseToSlug } from "../utils/disease";
-import { percent } from "../utils/format";
 import { clearScanHistory, getReminders, getScanHistory, saveDiseaseHandoff, updateReminder } from "../utils/storage";
 
 export default function HistoryPage() {
@@ -82,9 +81,7 @@ export default function HistoryPage() {
                       </p>
                       <h2 className="mt-1 text-2xl font-black text-leaf-900">{displayDiseaseName(record.prediction.disease)}</h2>
                     </div>
-                    <span className="rounded-full bg-leaf-50 px-3 py-1 text-sm font-black text-leaf-700">
-                      {percent(record.prediction.confidence)}
-                    </span>
+                    <span className="rounded-full bg-leaf-50 px-3 py-1 text-sm font-black text-leaf-700">Saved scan</span>
                   </div>
                   <p className="mt-3 line-clamp-2 text-sm font-semibold leading-6 text-green-950/68">{record.guidance.explanation}</p>
                   <Link

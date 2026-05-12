@@ -40,7 +40,7 @@ export function ImageUploader({ title, hint, captureLabel, predictLabel, isLoadi
               <UploadTip text="Use one clear leaf photo in natural light." />
               <UploadTip text="Keep the leaf centered and avoid heavy blur." />
               <UploadTip text="Works from phone camera or saved gallery." />
-              <UploadTip text="Shows confidence and top-3 disease matches." />
+              <UploadTip text="Shows the predicted disease and possible alternatives." />
             </div>
           </div>
 

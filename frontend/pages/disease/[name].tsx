@@ -10,7 +10,6 @@ import { useTranslation } from "../../hooks/useTranslation";
 import { generateGuidance } from "../../services/api";
 import { GuidanceResponse, PredictionResponse } from "../../types";
 import { cropFromDisease, displayDiseaseName, slugToDisease } from "../../utils/disease";
-import { percent } from "../../utils/format";
 
 type StoredDisease = {
   prediction?: PredictionResponse;
@@ -101,13 +100,9 @@ export default function DiseaseDetailsPage() {
                 </div>
                 {prediction && (
                   <div className="mt-5">
-                    <div className="flex justify-between text-sm font-bold text-green-950/70">
-                      <span>Model confidence</span>
-                      <span>{percent(prediction.confidence)}</span>
-                    </div>
-                    <div className="mt-2 h-3 overflow-hidden rounded-full bg-white">
-                      <div className="h-full rounded-full bg-leaf-600" style={{ width: `${prediction.confidence * 100}%` }} />
-                    </div>
+                    <p className="rounded-2xl bg-white px-4 py-3 text-sm font-bold leading-6 text-green-950/72">
+                      Prediction generated from the uploaded leaf image. Use the checklist below to compare with field symptoms.
+                    </p>
                   </div>
                 )}
               </div>

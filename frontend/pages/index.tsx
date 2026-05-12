@@ -44,9 +44,7 @@ export default function Home() {
       stop: t.stop,
       whatsapp: t.whatsapp,
       phone: t.phone,
-      knowMore: t.knowMore,
-      uncertain: t.uncertain,
-      unknown: t.unknown
+      knowMore: t.knowMore
     }),
     [t]
   );

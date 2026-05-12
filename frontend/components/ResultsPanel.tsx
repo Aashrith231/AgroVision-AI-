@@ -1,8 +1,8 @@
 import { useMemo, useState } from "react";
-import { AlertTriangle, Bell, BookOpen, CheckCircle2, MessageCircle, PauseCircle, PlayCircle, Send } from "lucide-react";
+import { Bell, BookOpen, CheckCircle2, ChevronDown, ChevronUp, MessageCircle, PauseCircle, PlayCircle, Send, Sparkles } from "lucide-react";
 import { Language } from "../i18n/translations";
 import { GuidanceResponse, PredictionResponse, SeverityInput } from "../types";
-import { percent } from "../utils/format";
+import { displayDiseaseName } from "../utils/disease";
 import { calculateSeverity } from "../utils/severity";
 import { saveReminder } from "../utils/storage";
 
@@ -18,8 +18,6 @@ type Labels = {
   whatsapp: string;
   phone: string;
   knowMore: string;
-  uncertain: string;
-  unknown: string;
 };
 
 type Props = {
@@ -58,24 +56,14 @@ export function ResultsPanel({
     fruitOrStem: "no"
   });
   const [reminderSaved, setReminderSaved] = useState(false);
+  const [showAlternatives, setShowAlternatives] = useState(false);
   const severity = useMemo(() => calculateSeverity(severityInput), [severityInput]);
 
   if (!prediction) {
     return null;
   }
 
-  const confidenceColor =
-    prediction.confidence_level === "high"
-      ? "bg-leaf-600"
-      : prediction.confidence_level === "medium"
-        ? "bg-amber-500"
-      : "bg-red-500";
-  const localizedWarning =
-    prediction.confidence_level === "low"
-      ? labels.unknown
-      : prediction.confidence_level === "medium"
-        ? labels.uncertain
-        : prediction.warning;
+  const alternativePredictions = prediction.top_predictions.slice(1, 3);
 
   return (
     <section className="bg-leaf-50 py-14 sm:py-20">
@@ -84,44 +72,50 @@ export function ResultsPanel({
           <div className="flex items-start justify-between gap-4">
             <div>
               <p className="text-sm font-black uppercase tracking-[0.18em] text-leaf-600">Prediction</p>
-              <h2 className="mt-2 text-3xl font-black text-leaf-900">{prediction.disease}</h2>
+              <h2 className="mt-2 text-3xl font-black text-leaf-900">{displayDiseaseName(prediction.disease)}</h2>
+              <p className="mt-2 text-sm font-semibold leading-6 text-green-950/64">
+                AgroVision AI identified this as the most likely disease from the uploaded leaf image.
+              </p>
             </div>
-            {prediction.confidence_level === "high" ? (
-              <CheckCircle2 className="h-8 w-8 text-leaf-600" />
-            ) : (
-              <AlertTriangle className="h-8 w-8 text-amber-500" />
-            )}
+            <CheckCircle2 className="h-8 w-8 text-leaf-600" />
           </div>
 
-          <div className="mt-6">
-            <div className="mb-2 flex items-center justify-between text-sm font-bold text-green-950/70">
-              <span>Confidence</span>
-              <span>{percent(prediction.confidence)}</span>
-            </div>
-            <div className="h-3 overflow-hidden rounded-full bg-leaf-100">
-              <div className={`h-full rounded-full ${confidenceColor} progress-stripes`} style={{ width: `${prediction.confidence * 100}%` }} />
+          <div className="mt-6 rounded-3xl border border-leaf-100 bg-leaf-50 p-4">
+            <div className="flex items-center gap-3">
+              <div className="grid h-10 w-10 place-items-center rounded-2xl bg-white text-leaf-700">
+                <Sparkles className="h-5 w-5" />
+              </div>
+              <div>
+                <h3 className="font-black text-leaf-900">AI leaf analysis</h3>
+                <p className="text-sm font-semibold text-green-950/64">Guidance is prepared from the predicted condition.</p>
+              </div>
             </div>
           </div>
 
-          {localizedWarning && (
-            <div className="mt-5 rounded-2xl border border-amber-200 bg-amber-50 p-4 text-sm font-semibold text-amber-900">
-              {localizedWarning}
+          {alternativePredictions.length > 0 && (
+            <div className="mt-5">
+              <button
+                type="button"
+                onClick={() => setShowAlternatives((value) => !value)}
+                className="inline-flex w-full items-center justify-between rounded-2xl border border-leaf-200 bg-white px-4 py-3 text-left font-black text-leaf-900 transition hover:bg-leaf-50"
+              >
+                Other possible matches
+                {showAlternatives ? <ChevronUp className="h-5 w-5 text-leaf-600" /> : <ChevronDown className="h-5 w-5 text-leaf-600" />}
+              </button>
+              {showAlternatives && (
+                <div className="mt-3 space-y-3">
+                  {alternativePredictions.map((item) => (
+                    <div key={item.label} className="rounded-2xl border border-leaf-100 bg-leaf-50 p-4">
+                      <div className="flex items-center gap-3 text-sm font-bold">
+                        <span className="h-2 w-2 shrink-0 rounded-full bg-leaf-600" />
+                        <span className="text-leaf-900">{displayDiseaseName(item.label)}</span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           )}
-
-          <div className="mt-6">
-            <h3 className="text-lg font-black text-leaf-900">{labels.top3}</h3>
-            <div className="mt-3 space-y-3">
-              {prediction.top_predictions.map((item) => (
-                <div key={item.label} className="rounded-2xl border border-leaf-100 bg-leaf-50 p-4">
-                  <div className="flex items-center justify-between gap-3 text-sm font-bold">
-                    <span className="text-leaf-900">{item.label}</span>
-                    <span className="text-leaf-700">{percent(item.confidence)}</span>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
         </div>
 
         {guidance && (
