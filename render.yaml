@@ -1,0 +1,23 @@
+services:
+  - type: web
+    name: agrovision-ai-backend
+    env: python
+    rootDir: backend
+    plan: starter
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn main:app --host 0.0.0.0 --port $PORT
+    envVars:
+      - key: APP_NAME
+        value: AgroVision AI
+      - key: ENVIRONMENT
+        value: production
+      - key: MODEL_PATH
+        value: ../models/EfficientNetB0.h5
+      - key: CLASS_NAMES_PATH
+        value: ../models/class_names.json
+      - key: MODEL_FAMILY
+        value: efficientnet
+      - key: IMAGE_SIZE
+        value: "224"
+      - key: OLLAMA_ENABLED
+        value: "false"

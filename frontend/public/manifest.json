@@ -1,0 +1,17 @@
+{
+  "name": "AgroVision AI",
+  "short_name": "AgroVision",
+  "description": "AI plant disease detection and farmer guidance.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#f8fbf5",
+  "theme_color": "#16a34a",
+  "icons": [
+    {
+      "src": "/agrovision-icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}

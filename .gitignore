@@ -1,0 +1,42 @@
+# Environment and secrets
+.env
+.env.*
+!.env.example
+frontend/.env.local
+backend/.env
+
+# Python
+.venv/
+venv/
+__pycache__/
+**/__pycache__/
+*.py[cod]
+.pytest_cache/
+
+# Node / Next.js
+node_modules/
+.next/
+out/
+dist/
+build/
+
+# Logs and local server output
+*.log
+server*.log
+backend/server*.log
+frontend/server*.log
+
+# OS / editor
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
+# Large non-default model artifacts
+# The app deploys with EfficientNetB0 by default. Use Git LFS or external storage for the others.
+models/*.h5
+!models/EfficientNetB0.h5
+
+
+##not needed ig?
+DEPLOYMENT.md 
