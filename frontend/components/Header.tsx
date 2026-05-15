@@ -22,6 +22,7 @@ export function Header({ brand, language, setLanguage }: Props) {
           <a className="hover:text-leaf-600" href="/#upload">Upload</a>
           <a className="hover:text-leaf-600" href="/library">Library</a>
           <a className="hover:text-leaf-600" href="/history">History</a>
+          <a className="hover:text-leaf-600" href="/admin">Admin</a>
           <a className="hover:text-leaf-600" href="/#features">Features</a>
           <a className="hover:text-leaf-600" href="/#crops">Crops</a>
         </nav>
@@ -31,6 +32,7 @@ export function Header({ brand, language, setLanguage }: Props) {
         <a className="shrink-0 rounded-full bg-leaf-50 px-4 py-2" href="/#upload">Upload</a>
         <a className="shrink-0 rounded-full bg-leaf-50 px-4 py-2" href="/library">Library</a>
         <a className="shrink-0 rounded-full bg-leaf-50 px-4 py-2" href="/history">History</a>
+        <a className="shrink-0 rounded-full bg-leaf-50 px-4 py-2" href="/admin">Admin</a>
         <a className="shrink-0 rounded-full bg-leaf-50 px-4 py-2" href="/#features">Features</a>
       </nav>
     </header>

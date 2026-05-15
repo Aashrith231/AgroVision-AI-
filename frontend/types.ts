@@ -72,3 +72,50 @@ export type WeatherRisk = {
   summary: string;
   tips: string[];
 };
+
+export type ApiDiagnostic = {
+  id: string;
+  createdAt: string;
+  action: string;
+  userMessage: string;
+  apiBaseUrl: string;
+  status?: number;
+  method?: string;
+  url?: string;
+  detail?: string;
+};
+
+export type ImageQuality = {
+  status: "good" | "warning" | "bad";
+  sharpness: number;
+  brightness: number;
+  message: string;
+  tips: string[];
+};
+
+export type ModelInfoResponse = {
+  app_name: string;
+  environment: string;
+  model: {
+    model_name: string;
+    model_family: string;
+    image_size: number;
+    model_file_found: boolean;
+    class_file_found: boolean;
+    class_count: number;
+    expected_classes: number;
+    model_loaded: boolean;
+    class_error?: string | null;
+  };
+  providers: {
+    gemini_configured: boolean;
+    ollama_enabled: boolean;
+    ollama_model?: string | null;
+    elevenlabs_configured: boolean;
+    twilio_configured: boolean;
+  };
+  runtime: {
+    max_upload_mb: number;
+    cors_mode: string;
+  };
+};

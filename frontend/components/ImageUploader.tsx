@@ -1,7 +1,8 @@
 import Image from "next/image";
 import { useCallback } from "react";
 import { useDropzone } from "react-dropzone";
-import { Camera, CheckCircle2, ImagePlus, Loader2, UploadCloud } from "lucide-react";
+import { AlertTriangle, Camera, CheckCircle2, ImagePlus, Loader2, UploadCloud } from "lucide-react";
+import { ImageQuality } from "../types";
 
 type Props = {
   title: string;
@@ -10,11 +11,24 @@ type Props = {
   predictLabel: string;
   isLoading: boolean;
   previewUrl: string | null;
+  imageQuality?: ImageQuality | null;
+  isCheckingQuality?: boolean;
   onFile: (file: File) => void;
   onPredict: () => void;
 };
 
-export function ImageUploader({ title, hint, captureLabel, predictLabel, isLoading, previewUrl, onFile, onPredict }: Props) {
+export function ImageUploader({
+  title,
+  hint,
+  captureLabel,
+  predictLabel,
+  isLoading,
+  previewUrl,
+  imageQuality,
+  isCheckingQuality,
+  onFile,
+  onPredict
+}: Props) {
   const onDrop = useCallback((acceptedFiles: File[]) => {
     const [file] = acceptedFiles;
     if (file) onFile(file);
@@ -64,6 +78,39 @@ export function ImageUploader({ title, hint, captureLabel, predictLabel, isLoadi
                 </div>
               )}
             </div>
+
+            {previewUrl && (isCheckingQuality || imageQuality) && (
+              <div
+                className={`mt-4 rounded-2xl border px-4 py-3 ${
+                  imageQuality?.status === "bad"
+                    ? "border-amber-300 bg-amber-50 text-amber-950"
+                    : imageQuality?.status === "warning"
+                      ? "border-yellow-200 bg-yellow-50 text-yellow-950"
+                      : "border-leaf-100 bg-white text-leaf-900"
+                }`}
+              >
+                <div className="flex items-start gap-3">
+                  <div className="mt-0.5 grid h-8 w-8 shrink-0 place-items-center rounded-full bg-white/80">
+                    {isCheckingQuality ? <Loader2 className="h-4 w-4 animate-spin" /> : imageQuality?.status === "good" ? <CheckCircle2 className="h-4 w-4 text-leaf-600" /> : <AlertTriangle className="h-4 w-4 text-amber-600" />}
+                  </div>
+                  <div>
+                    <p className="font-black">{isCheckingQuality ? "Checking photo clarity..." : imageQuality?.message}</p>
+                    {imageQuality && (
+                      <p className="mt-1 text-sm leading-6 opacity-75">
+                        Sharpness {Math.round(imageQuality.sharpness)} · Light {Math.round(imageQuality.brightness)}
+                      </p>
+                    )}
+                    {imageQuality?.tips?.length ? (
+                      <ul className="mt-2 space-y-1 text-sm font-semibold leading-6 opacity-80">
+                        {imageQuality.tips.slice(0, 2).map((tip) => (
+                          <li key={tip}>{tip}</li>
+                        ))}
+                      </ul>
+                    ) : null}
+                  </div>
+                </div>
+              </div>
+            )}
 
             <div className="mt-4 grid gap-3 sm:grid-cols-2">
               <label className="inline-flex cursor-pointer items-center justify-center gap-2 rounded-2xl border border-leaf-200 bg-white px-4 py-3 font-bold text-leaf-900 transition hover:border-leaf-500">

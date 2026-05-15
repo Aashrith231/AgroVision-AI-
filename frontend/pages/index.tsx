@@ -12,8 +12,10 @@ import { WeatherRiskCard } from "../components/WeatherRiskCard";
 import { Language } from "../i18n/translations";
 import { useTranslation } from "../hooks/useTranslation";
 import { generateGuidance, generateVoice, predictDisease, sendWhatsApp } from "../services/api";
-import { GuidanceResponse, PredictionResponse } from "../types";
+import { GuidanceResponse, ImageQuality, PredictionResponse } from "../types";
+import { saveApiDiagnostic } from "../utils/adminDiagnostics";
 import { diseaseToSlug } from "../utils/disease";
+import { analyzeImageQuality } from "../utils/imageQuality";
 import { fileToDataUrl, saveDiseaseHandoff, saveScanRecord } from "../utils/storage";
 
 export default function Home() {
@@ -30,6 +32,8 @@ export default function Home() {
   const [isVoiceLoading, setIsVoiceLoading] = useState(false);
   const [isWhatsAppLoading, setIsWhatsAppLoading] = useState(false);
   const [isPlaying, setIsPlaying] = useState(false);
+  const [imageQuality, setImageQuality] = useState<ImageQuality | null>(null);
+  const [isCheckingQuality, setIsCheckingQuality] = useState(false);
   const audioRef = useRef<HTMLAudioElement | null>(null);
 
   const resultLabels = useMemo(
@@ -55,19 +59,37 @@ export default function Home() {
     };
   }, [previewUrl]);
 
-  function handleFile(nextFile: File) {
+  async function handleFile(nextFile: File) {
     if (previewUrl) URL.revokeObjectURL(previewUrl);
     setFile(nextFile);
     setPreviewUrl(URL.createObjectURL(nextFile));
     fileToDataUrl(nextFile).then(setImageDataUrl).catch(() => setImageDataUrl(undefined));
+    setImageQuality(null);
     setPrediction(null);
     setGuidance(null);
+    setIsCheckingQuality(true);
+    try {
+      setImageQuality(await analyzeImageQuality(nextFile));
+    } catch {
+      setImageQuality({
+        status: "warning",
+        sharpness: 0,
+        brightness: 0,
+        message: "Photo quality could not be checked on this device.",
+        tips: ["Use a clear, centered leaf photo in natural light."]
+      });
+    } finally {
+      setIsCheckingQuality(false);
+    }
   }
 
   async function handlePredict() {
     if (!file) {
       toast.error("Please upload a leaf image first.");
       return;
+    }
+    if (imageQuality?.status === "bad") {
+      toast("This photo looks blurry. You can scan it, but a clearer retake may work better.", { icon: "!" });
     }
 
     setIsLoading(true);
@@ -80,10 +102,18 @@ export default function Home() {
       setPrediction(predictionResult);
       const guidanceResult = await generateGuidance(predictionResult.disease, language);
       setGuidance(guidanceResult);
+      if (guidanceResult.provider_error) {
+        saveApiDiagnostic({
+          action: "Guidance provider fallback",
+          userMessage: "Guidance was prepared with a backup source.",
+          apiBaseUrl: process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8000",
+          detail: guidanceResult.provider_error
+        });
+      }
       saveScanRecord({ imageDataUrl: savedImage, prediction: predictionResult, guidance: guidanceResult });
       toast.success("Diagnosis ready");
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Prediction failed");
+      toast.error(error instanceof Error ? error.message : "Diagnosis could not be completed.");
     } finally {
       setIsLoading(false);
     }
@@ -108,7 +138,7 @@ export default function Home() {
       await audio.play();
       setIsPlaying(true);
     } catch {
-      toast.error("Voice generation failed");
+      toast.error("Voice is not available right now.");
     } finally {
       setIsVoiceLoading(false);
     }
@@ -135,15 +165,23 @@ export default function Home() {
       if (response.wa_link) {
         window.open(response.wa_link, "_blank", "noopener,noreferrer");
       }
+      if (response.twilio_error) {
+        saveApiDiagnostic({
+          action: "Twilio WhatsApp fallback",
+          userMessage: "WhatsApp direct send is unavailable. Opening share instead.",
+          apiBaseUrl: process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8000",
+          detail: response.twilio_error
+        });
+      }
       if (response.sent) {
         toast.success("WhatsApp message sent by Twilio");
       } else if (response.twilio_error) {
-        toast.error(`Twilio failed: ${response.twilio_error}`);
+        toast.error("WhatsApp direct send is unavailable. Opening share instead.");
       } else {
         toast.success("WhatsApp share opened");
       }
     } catch {
-      toast.error("WhatsApp sharing failed");
+      toast.error("WhatsApp sharing is not available right now.");
     } finally {
       setIsWhatsAppLoading(false);
     }
@@ -178,6 +216,8 @@ export default function Home() {
           predictLabel={isLoading ? t.analyzing : t.predict}
           isLoading={isLoading}
           previewUrl={previewUrl}
+          imageQuality={imageQuality}
+          isCheckingQuality={isCheckingQuality}
           onFile={handleFile}
           onPredict={handlePredict}
         />

@@ -74,6 +74,30 @@ class PlantDiseasePredictor:
             "top_predictions": top_predictions,
         }
 
+    def model_info(self) -> dict:
+        model_path = self.settings.resolve_path(self.settings.model_path)
+        class_path = self.settings.resolve_path(self.settings.class_names_path)
+        class_names: list[str] = []
+        class_error = None
+
+        if class_path.exists():
+            try:
+                class_names = self._read_class_names(class_path)
+            except Exception as exc:
+                class_error = str(exc)
+
+        return {
+            "model_name": model_path.name,
+            "model_family": self.settings.model_family,
+            "image_size": self.settings.image_size,
+            "model_file_found": model_path.exists(),
+            "class_file_found": class_path.exists(),
+            "class_count": len(class_names),
+            "expected_classes": 36,
+            "model_loaded": self._model is not None,
+            "class_error": class_error,
+        }
+
     @staticmethod
     def _read_class_names(path: Path) -> list[str]:
         data = json.loads(path.read_text(encoding="utf-8"))
