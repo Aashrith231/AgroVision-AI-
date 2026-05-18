@@ -1,4 +1,4 @@
-from fastapi import APIRouter
+from fastapi import APIRouter, Header, HTTPException, status
 
 from api.config import get_settings
 from inference.predictor import predictor
@@ -13,7 +13,15 @@ def health() -> dict:
 
 
 @router.get("/model-info")
-def model_info() -> dict:
+def model_info(authorization: str | None = Header(default=None)) -> dict:
+    if settings.admin_token:
+        expected = f"Bearer {settings.admin_token}"
+        if authorization != expected:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Admin access required.",
+            )
+
     info = predictor.model_info()
     return {
         "app_name": settings.app_name,

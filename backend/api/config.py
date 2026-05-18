@@ -34,6 +34,8 @@ class Settings(BaseSettings):
     twilio_auth_token: str | None = None
     twilio_whatsapp_from: str = "whatsapp:+14155238886"
 
+    admin_token: str | None = None
+
     max_upload_mb: int = 8
 
     model_config = SettingsConfigDict(

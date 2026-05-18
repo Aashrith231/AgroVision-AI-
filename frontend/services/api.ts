@@ -131,9 +131,12 @@ export async function getHealth(): Promise<{ status: string }> {
   }
 }
 
-export async function getModelInfo(): Promise<ModelInfoResponse> {
+export async function getModelInfo(adminToken?: string): Promise<ModelInfoResponse> {
   try {
-    const { data } = await api.get<ModelInfoResponse>("/model-info", { timeout: 12000 });
+    const { data } = await api.get<ModelInfoResponse>("/model-info", {
+      timeout: 12000,
+      headers: adminToken ? { Authorization: `Bearer ${adminToken}` } : undefined,
+    });
     return data;
   } catch (error) {
     throw normalizeApiError(error, "Load model info");
