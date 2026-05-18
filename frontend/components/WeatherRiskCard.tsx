@@ -42,10 +42,10 @@ export function WeatherRiskCard() {
   return (
     <section className="bg-white py-10">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        <div className="grid gap-5 rounded-3xl border border-leaf-100 bg-leaf-50 p-5 shadow-soft lg:grid-cols-[0.8fr_1.2fr] lg:p-6">
+        <div className="grid gap-5 border border-[#d7e3d1] bg-[#f7f8f1] p-5 lg:grid-cols-[0.8fr_1.2fr] lg:p-6">
           <div>
             <div className="flex items-center gap-3">
-              <div className="grid h-11 w-11 place-items-center rounded-2xl bg-white text-leaf-700">
+              <div className="grid h-11 w-11 place-items-center rounded-md bg-white text-leaf-700">
                 <CloudSun className="h-6 w-6" />
               </div>
               <div>
@@ -58,7 +58,7 @@ export function WeatherRiskCard() {
             </p>
           </div>
 
-          <div className="rounded-3xl bg-white p-5">
+          <div className="bg-white p-5">
             {status === "loading" && (
               <div className="flex items-center gap-3 font-bold text-leaf-900">
                 <Loader2 className="h-5 w-5 animate-spin" />
@@ -71,7 +71,7 @@ export function WeatherRiskCard() {
                   <TriangleAlert className="h-5 w-5" />
                   Allow location to show weather risk.
                 </div>
-                <button onClick={loadWeather} className="mt-4 inline-flex items-center gap-2 rounded-full bg-leaf-600 px-4 py-2 text-sm font-black text-white">
+                <button onClick={loadWeather} className="mt-4 inline-flex items-center gap-2 rounded-md bg-[#184f2b] px-4 py-2 text-sm font-black text-white">
                   <LocateFixed className="h-4 w-4" />
                   Try again
                 </button>
@@ -80,7 +80,7 @@ export function WeatherRiskCard() {
             {risk && (
               <div>
                 <div className="flex flex-wrap items-center justify-between gap-3">
-                  <span className={`rounded-full border px-4 py-2 text-sm font-black ${riskColor}`}>
+                  <span className={`rounded-md border px-4 py-2 text-sm font-black ${riskColor}`}>
                     {risk.riskLevel} risk
                   </span>
                   <div className="grid grid-cols-4 gap-2 text-center text-xs font-bold text-green-950/70">
@@ -93,7 +93,7 @@ export function WeatherRiskCard() {
                 <p className="mt-4 font-semibold leading-7 text-green-950/78">{risk.summary}</p>
                 <div className="mt-4 grid gap-2 sm:grid-cols-2">
                   {risk.tips.map((tip) => (
-                    <div key={tip} className="rounded-2xl bg-leaf-50 px-3 py-3 text-sm font-semibold leading-6 text-green-950/70">
+                    <div key={tip} className="bg-[#f2f6ee] px-3 py-3 text-sm font-semibold leading-6 text-green-950/70">
                       {tip}
                     </div>
                   ))}
@@ -109,7 +109,7 @@ export function WeatherRiskCard() {
 
 function Metric({ label, value }: { label: string; value: string }) {
   return (
-    <div className="rounded-2xl bg-leaf-50 px-3 py-2">
+    <div className="bg-[#f2f6ee] px-3 py-2">
       <p className="text-leaf-900">{value}</p>
       <p className="mt-1 text-[0.68rem] uppercase tracking-wide text-green-950/50">{label}</p>
     </div>
