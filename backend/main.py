@@ -28,3 +28,4 @@ app.include_router(whatsapp.router)
 @app.get("/")
 def root() -> dict:
     return {"name": settings.app_name, "docs": "/docs"}
+
