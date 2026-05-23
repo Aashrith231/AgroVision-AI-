@@ -69,6 +69,7 @@ export function ResultsPanel({
     prediction.disease.toLowerCase().includes("without_leaves") ||
     prediction.disease.toLowerCase().includes("without leaves");
   const predictedTitle = isBackground ? "No clear leaf detected" : displayDiseaseName(prediction.disease);
+  const modeLabel = prediction.model_mode === "medicinal" ? "Medicinal plant disease model" : "Normal crop disease model";
 
   return (
     <section className="bg-leaf-50 py-14 sm:py-20">
@@ -77,6 +78,9 @@ export function ResultsPanel({
           <div className="flex items-start justify-between gap-4">
             <div>
               <p className="text-sm font-black uppercase tracking-[0.18em] text-leaf-600">Prediction</p>
+              <p className="mt-2 inline-flex rounded-full bg-leaf-50 px-3 py-1 text-xs font-black uppercase tracking-[0.12em] text-green-950/55">
+                {modeLabel}
+              </p>
               <h2 className="mt-2 text-3xl font-black text-leaf-900">{predictedTitle}</h2>
               <p className="mt-2 text-sm font-semibold leading-6 text-green-950/64">
                 {isBackground

@@ -36,6 +36,7 @@ Thumbs.db
 # The app deploys with EfficientNetB0 by default. Use Git LFS or external storage for the others.
 models/*.h5
 !models/EfficientNetB0.h5
+!models/medicinal_disease_recognition_model.h5
 
 
 ##not needed ig?

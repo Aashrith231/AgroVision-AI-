@@ -2,7 +2,7 @@ import Image from "next/image";
 import { useCallback } from "react";
 import { useDropzone } from "react-dropzone";
 import { AlertTriangle, Camera, CheckCircle2, ImagePlus, Loader2, UploadCloud } from "lucide-react";
-import { ImageQuality } from "../types";
+import { ImageQuality, ModelMode } from "../types";
 
 type Props = {
   title: string;
@@ -13,6 +13,8 @@ type Props = {
   previewUrl: string | null;
   imageQuality?: ImageQuality | null;
   isCheckingQuality?: boolean;
+  modelMode: ModelMode;
+  onModelModeChange: (mode: ModelMode) => void;
   onFile: (file: File) => void;
   onPredict: () => void;
 };
@@ -26,6 +28,8 @@ export function ImageUploader({
   previewUrl,
   imageQuality,
   isCheckingQuality,
+  modelMode,
+  onModelModeChange,
   onFile,
   onPredict
 }: Props) {
@@ -50,6 +54,23 @@ export function ImageUploader({
             <p className="mt-4 max-w-xl text-base leading-7 text-green-950/70">
               {hint}
             </p>
+            <div className="mt-6 max-w-xl rounded-2xl border border-leaf-100 bg-leaf-50 p-2">
+              <p className="px-2 pb-2 text-xs font-black uppercase tracking-[0.16em] text-green-950/50">Select model</p>
+              <div className="grid gap-2 sm:grid-cols-2">
+                <ModeButton
+                  active={modelMode === "crop"}
+                  title="Normal plants"
+                  text="Crop leaf disease"
+                  onClick={() => onModelModeChange("crop")}
+                />
+                <ModeButton
+                  active={modelMode === "medicinal"}
+                  title="Medicinal plants"
+                  text="Medicinal leaf disease"
+                  onClick={() => onModelModeChange("medicinal")}
+                />
+              </div>
+            </div>
             <div className="mt-6 grid max-w-xl gap-3 sm:grid-cols-2">
               <UploadTip text="Use one clear leaf photo in natural light." />
               <UploadTip text="Keep the leaf centered and avoid heavy blur." />
@@ -141,6 +162,34 @@ export function ImageUploader({
         </div>
       </div>
     </section>
+  );
+}
+
+function ModeButton({
+  active,
+  title,
+  text,
+  onClick,
+}: {
+  active: boolean;
+  title: string;
+  text: string;
+  onClick: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={`rounded-xl border px-4 py-3 text-left transition ${
+        active ? "border-leaf-600 bg-white text-leaf-900 shadow-sm" : "border-transparent bg-transparent text-green-950/65 hover:bg-white/70"
+      }`}
+    >
+      <span className="flex items-center gap-2 font-black">
+        <span className={`h-2.5 w-2.5 rounded-full ${active ? "bg-leaf-600" : "bg-green-950/25"}`} />
+        {title}
+      </span>
+      <span className="mt-1 block text-sm font-semibold">{text}</span>
+    </button>
   );
 }
 

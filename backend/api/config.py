@@ -17,6 +17,11 @@ class Settings(BaseSettings):
     model_path: str = "../models/EfficientNetB0.h5"
     class_names_path: str = "../models/class_names.json"
     model_family: str = "efficientnet"
+
+    medicinal_model_path: str = "../models/medicinal_disease_recognition_model.h5"
+    medicinal_class_names_path: str = "../models/medicinal_disease_recognition_model_classes.json"
+    medicinal_model_family: str = "raw"
+
     image_size: int = 224
 
     gemini_api_key: str | None = None

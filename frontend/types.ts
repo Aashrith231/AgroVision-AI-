@@ -1,9 +1,12 @@
+export type ModelMode = "crop" | "medicinal";
+
 export type PredictionItem = {
   label: string;
   confidence: number;
 };
 
 export type PredictionResponse = {
+  model_mode?: ModelMode;
   disease: string;
   confidence: number;
   confidence_level: "high" | "medium" | "low";
@@ -93,10 +96,9 @@ export type ImageQuality = {
   tips: string[];
 };
 
-export type ModelInfoResponse = {
-  app_name: string;
-  environment: string;
-  model: {
+export type ModelRuntimeInfo = {
+    mode?: ModelMode;
+    label?: string;
     model_name: string;
     model_family: string;
     image_size: number;
@@ -106,7 +108,13 @@ export type ModelInfoResponse = {
     expected_classes: number;
     model_loaded: boolean;
     class_error?: string | null;
-  };
+};
+
+export type ModelInfoResponse = {
+  app_name: string;
+  environment: string;
+  model: ModelRuntimeInfo;
+  available_modes?: ModelRuntimeInfo[];
   providers: {
     gemini_configured: boolean;
     ollama_enabled: boolean;

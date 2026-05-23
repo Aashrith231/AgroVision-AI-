@@ -12,7 +12,7 @@ import { WeatherRiskCard } from "../components/WeatherRiskCard";
 import { Language } from "../i18n/translations";
 import { useTranslation } from "../hooks/useTranslation";
 import { generateGuidance, generateVoice, predictDisease, sendWhatsApp } from "../services/api";
-import { GuidanceResponse, ImageQuality, PredictionResponse } from "../types";
+import { GuidanceResponse, ImageQuality, ModelMode, PredictionResponse } from "../types";
 import { saveApiDiagnostic } from "../utils/adminDiagnostics";
 import { diseaseToSlug } from "../utils/disease";
 import { analyzeImageQuality } from "../utils/imageQuality";
@@ -27,6 +27,7 @@ export default function Home() {
   const [imageDataUrl, setImageDataUrl] = useState<string | undefined>();
   const [prediction, setPrediction] = useState<PredictionResponse | null>(null);
   const [guidance, setGuidance] = useState<GuidanceResponse | null>(null);
+  const [modelMode, setModelMode] = useState<ModelMode>("crop");
   const [phone, setPhone] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [isVoiceLoading, setIsVoiceLoading] = useState(false);
@@ -98,7 +99,7 @@ export default function Home() {
     try {
       const savedImage = imageDataUrl || (file ? await fileToDataUrl(file) : undefined);
       if (savedImage && !imageDataUrl) setImageDataUrl(savedImage);
-      const predictionResult = await predictDisease(file);
+      const predictionResult = await predictDisease(file, modelMode);
       setPrediction(predictionResult);
       const guidanceResult = await generateGuidance(predictionResult.disease, language);
       setGuidance(guidanceResult);
@@ -218,6 +219,12 @@ export default function Home() {
           previewUrl={previewUrl}
           imageQuality={imageQuality}
           isCheckingQuality={isCheckingQuality}
+          modelMode={modelMode}
+          onModelModeChange={(mode) => {
+            setModelMode(mode);
+            setPrediction(null);
+            setGuidance(null);
+          }}
           onFile={handleFile}
           onPredict={handlePredict}
         />

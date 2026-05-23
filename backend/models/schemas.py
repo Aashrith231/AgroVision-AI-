@@ -1,4 +1,8 @@
 from pydantic import BaseModel, Field
+from typing import Literal
+
+
+ModelMode = Literal["crop", "medicinal"]
 
 
 class PredictionItem(BaseModel):
@@ -7,6 +11,7 @@ class PredictionItem(BaseModel):
 
 
 class PredictionResponse(BaseModel):
+    model_mode: ModelMode = "crop"
     disease: str
     confidence: float
     confidence_level: str

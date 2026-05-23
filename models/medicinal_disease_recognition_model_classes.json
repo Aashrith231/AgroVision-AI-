@@ -1,0 +1,17 @@
+{
+  "class_names": [
+    "Camphor___Bacterial_Spot",
+    "Camphor___Healthy_Leaf",
+    "Camphor___Shot_Hole",
+    "HariTaki___Bacterial_Spot",
+    "HariTaki___Healthy_Leaf",
+    "HariTaki___Shot_Hole",
+    "Neem___Healthy_Leaf",
+    "Neem___Powdery_Mildew",
+    "Neem___Shot_Hole_Leaf",
+    "Neem___Yellow_Leaf",
+    "Sojina___Bacterial_Spot",
+    "Sojina___Healthy_Leaf",
+    "Sojina___Yellow_Leaf"
+  ]
+}

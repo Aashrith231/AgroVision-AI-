@@ -1,4 +1,4 @@
-from fastapi import APIRouter, File, HTTPException, UploadFile
+from fastapi import APIRouter, File, Form, HTTPException, UploadFile
 
 from api.config import get_settings
 from inference.predictor import predictor
@@ -8,8 +8,11 @@ router = APIRouter(tags=["prediction"])
 
 
 @router.post("/predict", response_model=PredictionResponse)
-async def predict(file: UploadFile = File(...)) -> dict:
+async def predict(file: UploadFile = File(...), mode: str = Form(default="crop")) -> dict:
     settings = get_settings()
+    if mode not in {"crop", "medicinal"}:
+        raise HTTPException(status_code=400, detail="Invalid prediction mode.")
+
     if file.content_type not in {"image/jpeg", "image/png"}:
         raise HTTPException(status_code=400, detail="Only JPG and PNG images are supported.")
 
@@ -20,6 +23,6 @@ async def predict(file: UploadFile = File(...)) -> dict:
         raise HTTPException(status_code=413, detail=f"Image must be smaller than {settings.max_upload_mb} MB.")
 
     try:
-        return predictor.predict(image_bytes)
+        return predictor.predict(image_bytes, mode=mode)
     except Exception as exc:
         raise HTTPException(status_code=500, detail=str(exc)) from exc

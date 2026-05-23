@@ -18,6 +18,7 @@ PREPROCESSORS = {
     "vgg16": vgg16.preprocess_input,
     "densenet121": densenet.preprocess_input,
     "none": lambda x: x / 255.0,
+    "raw": lambda x: x,
 }
 
 

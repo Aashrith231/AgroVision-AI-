@@ -2,6 +2,7 @@ import axios from "axios";
 import {
   GuidanceResponse,
   ModelInfoResponse,
+  ModelMode,
   PredictionResponse,
   VoiceResponse,
   WhatsAppResponse
@@ -70,10 +71,11 @@ function normalizeApiError(error: unknown, action: string): FarmerSafeApiError {
   return apiError;
 }
 
-export async function predictDisease(file: File): Promise<PredictionResponse> {
+export async function predictDisease(file: File, mode: ModelMode): Promise<PredictionResponse> {
   try {
     const form = new FormData();
     form.append("file", file);
+    form.append("mode", mode);
     const { data } = await api.post<PredictionResponse>("/predict", form, {
       headers: { "Content-Type": "multipart/form-data" }
     });
