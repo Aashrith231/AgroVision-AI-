@@ -1,7 +1,8 @@
-import { FollowUpReminder, GuidanceResponse, PredictionResponse, ScanRecord } from "../types";
+import { FollowUpReminder, GuidanceResponse, PredictionResponse, ProgressRecord, ScanRecord } from "../types";
 
 const HISTORY_KEY = "agrovision:scan-history";
 const REMINDER_KEY = "agrovision:follow-up-reminders";
+const PROGRESS_KEY = "agrovision:progress-records";
 
 export function getScanHistory(): ScanRecord[] {
   if (typeof window === "undefined") return [];
@@ -13,7 +14,7 @@ export function getScanHistory(): ScanRecord[] {
 }
 
 export function saveScanRecord(record: Omit<ScanRecord, "id" | "createdAt">) {
-  if (typeof window === "undefined") return;
+  if (typeof window === "undefined") return undefined;
   const next: ScanRecord = {
     ...record,
     id: crypto.randomUUID(),
@@ -30,10 +31,45 @@ export function saveScanRecord(record: Omit<ScanRecord, "id" | "createdAt">) {
       window.localStorage.removeItem(HISTORY_KEY);
     }
   }
+  return next;
 }
 
 export function clearScanHistory() {
   if (typeof window !== "undefined") window.localStorage.removeItem(HISTORY_KEY);
+}
+
+export function getProgressRecords(): ProgressRecord[] {
+  if (typeof window === "undefined") return [];
+  try {
+    return JSON.parse(window.localStorage.getItem(PROGRESS_KEY) || "[]") as ProgressRecord[];
+  } catch {
+    return [];
+  }
+}
+
+export function saveProgressRecord(record: Omit<ProgressRecord, "id" | "createdAt">) {
+  if (typeof window === "undefined") return undefined;
+  const next: ProgressRecord = {
+    ...record,
+    id: crypto.randomUUID(),
+    createdAt: new Date().toISOString()
+  };
+  const records = [next, ...getProgressRecords()].slice(0, 20);
+  try {
+    window.localStorage.setItem(PROGRESS_KEY, JSON.stringify(records));
+  } catch {
+    const compactRecords = records.map((item) => ({
+      ...item,
+      previousScan: { ...item.previousScan, imageDataUrl: undefined },
+      currentScan: { ...item.currentScan, imageDataUrl: undefined }
+    }));
+    try {
+      window.localStorage.setItem(PROGRESS_KEY, JSON.stringify(compactRecords));
+    } catch {
+      window.localStorage.removeItem(PROGRESS_KEY);
+    }
+  }
+  return next;
 }
 
 export function saveDiseaseHandoff(prediction: PredictionResponse, guidance: GuidanceResponse, language: string) {
