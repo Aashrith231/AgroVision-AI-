@@ -4,6 +4,8 @@ import {
   ModelInfoResponse,
   ModelMode,
   PredictionResponse,
+  ProgressReportRequest,
+  ProgressReportResponse,
   VoiceResponse,
   WhatsAppResponse
 } from "../types";
@@ -91,6 +93,15 @@ export async function generateGuidance(disease: string, language: Language): Pro
     return data;
   } catch (error) {
     throw normalizeApiError(error, "Generate guidance");
+  }
+}
+
+export async function generateProgressReport(payload: ProgressReportRequest): Promise<ProgressReportResponse> {
+  try {
+    const { data } = await api.post<ProgressReportResponse>("/progress-report", payload);
+    return data;
+  } catch (error) {
+    throw normalizeApiError(error, "Generate progress report");
   }
 }
 
