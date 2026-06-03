@@ -2,7 +2,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from api.config import get_settings
-from routes import guidance, health, predict, voice, whatsapp
+from routes import guidance, health, predict, progress, voice, whatsapp
 
 settings = get_settings()
 
@@ -21,6 +21,7 @@ app.add_middleware(
 app.include_router(health.router)
 app.include_router(predict.router)
 app.include_router(guidance.router)
+app.include_router(progress.router)
 app.include_router(voice.router)
 app.include_router(whatsapp.router)
 
