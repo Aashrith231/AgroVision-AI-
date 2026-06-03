@@ -2,7 +2,7 @@ import Head from "next/head";
 import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { CalendarClock, CheckCircle2, History, Trash2 } from "lucide-react";
+import { CalendarClock, CheckCircle2, History, Trash2, TrendingUp } from "lucide-react";
 import { Footer } from "../components/Footer";
 import { Header } from "../components/Header";
 import { Language } from "../i18n/translations";
@@ -84,13 +84,22 @@ export default function HistoryPage() {
                     <span className="rounded-full bg-leaf-50 px-3 py-1 text-sm font-black text-leaf-700">Saved scan</span>
                   </div>
                   <p className="mt-3 line-clamp-2 text-sm font-semibold leading-6 text-green-950/68">{record.guidance.explanation}</p>
-                  <Link
-                    href={`/disease/${diseaseToSlug(record.prediction.disease)}?lang=${language}`}
-                    onClick={() => saveDiseaseHandoff(record.prediction, record.guidance, language)}
-                    className="mt-4 inline-flex rounded-full bg-leaf-600 px-4 py-2 text-sm font-black text-white"
-                  >
-                    Open details
-                  </Link>
+                  <div className="mt-4 flex flex-wrap gap-2">
+                    <Link
+                      href={`/disease/${diseaseToSlug(record.prediction.disease)}?lang=${language}`}
+                      onClick={() => saveDiseaseHandoff(record.prediction, record.guidance, language)}
+                      className="inline-flex rounded-full bg-leaf-600 px-4 py-2 text-sm font-black text-white"
+                    >
+                      Open details
+                    </Link>
+                    <Link
+                      href={`/progress?scan=${record.id}`}
+                      className="inline-flex items-center gap-2 rounded-full border border-leaf-200 bg-white px-4 py-2 text-sm font-black text-leaf-900"
+                    >
+                      <TrendingUp className="h-4 w-4 text-leaf-600" />
+                      Track progress
+                    </Link>
+                  </div>
                 </div>
               </article>
             ))}
