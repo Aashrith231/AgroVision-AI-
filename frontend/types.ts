@@ -58,6 +58,51 @@ export type ScanRecord = {
   };
 };
 
+export type ProgressStatus = "Improving" | "Stable" | "Worsening" | "Inconclusive";
+
+export type ProgressRecord = {
+  id: string;
+  createdAt: string;
+  previousScan: ScanRecord;
+  currentScan: ScanRecord;
+  status: ProgressStatus;
+  summary: string;
+  nextSteps: string[];
+  source: string;
+};
+
+export type ProgressReportRequest = {
+  previous: {
+    disease: string;
+    confidence: number;
+    confidence_level?: string | null;
+    model_mode?: ModelMode | null;
+    scan_date?: string | null;
+    guidance_summary?: string | null;
+    disease_summary?: string | null;
+  };
+  current: {
+    disease: string;
+    confidence: number;
+    confidence_level?: string | null;
+    model_mode?: ModelMode | null;
+    scan_date?: string | null;
+    guidance_summary?: string | null;
+    disease_summary?: string | null;
+  };
+  status: ProgressStatus;
+  rule_summary: string;
+  language: string;
+};
+
+export type ProgressReportResponse = {
+  status: ProgressStatus;
+  summary: string;
+  next_steps: string[];
+  source: string;
+  provider_error?: string | null;
+};
+
 export type FollowUpReminder = {
   id: string;
   disease: string;
