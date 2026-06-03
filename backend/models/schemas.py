@@ -36,6 +36,32 @@ class GuidanceResponse(BaseModel):
     provider_error: str | None = None
 
 
+class ProgressPredictionPayload(BaseModel):
+    disease: str
+    confidence: float
+    confidence_level: str | None = None
+    model_mode: ModelMode | None = None
+    scan_date: str | None = None
+    guidance_summary: str | None = None
+    disease_summary: str | None = None
+
+
+class ProgressReportRequest(BaseModel):
+    previous: ProgressPredictionPayload
+    current: ProgressPredictionPayload
+    status: str
+    rule_summary: str
+    language: str = Field(default="en", pattern="^(en|hi|te)$")
+
+
+class ProgressReportResponse(BaseModel):
+    status: str
+    summary: str
+    next_steps: list[str]
+    source: str
+    provider_error: str | None = None
+
+
 class VoiceRequest(BaseModel):
     disease: str
     treatment: list[str] = []
