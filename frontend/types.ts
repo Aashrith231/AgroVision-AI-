@@ -38,6 +38,8 @@ export type WhatsAppResponse = {
   message: string;
   wa_link?: string | null;
   twilio_error?: string | null;
+  twilio_sid?: string | null;
+  twilio_status?: string | null;
 };
 
 export type SeverityInput = {
@@ -162,6 +164,8 @@ export type ModelInfoResponse = {
   available_modes?: ModelRuntimeInfo[];
   providers: {
     gemini_configured: boolean;
+    nvidia_configured?: boolean;
+    nvidia_model?: string | null;
     ollama_enabled: boolean;
     ollama_model?: string | null;
     elevenlabs_configured: boolean;

@@ -28,7 +28,13 @@ def model_info(authorization: str | None = Header(default=None)) -> dict:
         "environment": settings.environment,
         "model": info,
         "providers": {
+            "ai_provider": settings.ai_provider,
+            "ai_provider_order": settings.ai_provider_order,
             "gemini_configured": bool(settings.gemini_api_key),
+            "groq_configured": bool(settings.groq_api_key),
+            "groq_model": settings.groq_model if settings.groq_api_key else None,
+            "nvidia_configured": bool(settings.nvidia_api_key),
+            "nvidia_model": settings.nvidia_model if settings.nvidia_api_key else None,
             "ollama_enabled": settings.ollama_enabled,
             "ollama_model": settings.ollama_model if settings.ollama_enabled else None,
             "elevenlabs_configured": bool(settings.elevenlabs_api_key and settings.elevenlabs_voice_id),

@@ -24,6 +24,7 @@ The goal is to make disease detection more accessible, understandable, and actio
 - English, Hindi, and Telugu language support
 - Local weather risk analysis
 - Disease severity checker
+- Disease progress tracker
 - Scan history
 - Follow-up reminders
 - Disease library for all trained classes
@@ -52,6 +53,10 @@ AgroVision AI uses a fallback-based guidance system:
 ```text
 Gemini API
    ↓ if unavailable
+Groq API
+   ↓ if unavailable
+NVIDIA DeepSeek V4 Flash API
+   ↓ if unavailable
 Local Ollama model
    ↓ if unavailable
 Local disease guidance dictionary
@@ -78,6 +83,8 @@ This allows the app to continue working even when an online AI provider is unava
 
 - Trained CNN `.h5` models
 - Gemini API
+- Groq API
+- NVIDIA DeepSeek V4 Flash API
 - Ollama local LLM
 - ElevenLabs / gTTS voice generation
 - Twilio WhatsApp / `wa.me` fallback
@@ -97,9 +104,9 @@ This allows the app to continue working even when an online AI provider is unava
 
 ## Deployment
 
-The frontend can be deployed on Vercel, while the FastAPI backend can run either on a cloud service or locally during demo mode. For short demonstrations, the backend can be kept running on a laptop because it uses the trained TensorFlow model and local Ollama model for AI guidance.
+The frontend is deployed on Vercel. During demo mode, the FastAPI backend can run on a laptop and connect through ngrok. For a stable college deployment, the backend, trained CNN model files, and optional Ollama/Qwen local LLM should run on the college server.
 
-In demo deployment, the flow is:
+Demo deployment flow:
 
 ```text
 Vercel Frontend
@@ -109,6 +116,21 @@ ngrok HTTPS Tunnel
 Local FastAPI Backend
     ↓
 CNN Model + Ollama/Gemini Guidance
+```
+
+College server deployment flow:
+
+```text
+Vercel Frontend
+    ↓
+College Server Backend URL
+    ↓
+FastAPI Backend
+    ↓
+CNN Model + Ollama/Qwen or Guidance Fallback
+```
+
+See `COLLEGE_SERVER_DEPLOYMENT.md` for server setup, environment variables, limitations, and deployment checks.
 
 
 ## Notes

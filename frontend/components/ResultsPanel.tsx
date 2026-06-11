@@ -28,11 +28,13 @@ type Props = {
   setPhone: (phone: string) => void;
   isVoiceLoading: boolean;
   isWhatsAppLoading: boolean;
+  whatsAppFallbackLink?: string | null;
   isPlaying: boolean;
   language: Language;
   onPlay: () => void;
   onStop: () => void;
   onWhatsApp: () => void;
+  onWhatsAppFallback: () => void;
   onKnowMore: () => void;
 };
 
@@ -44,10 +46,12 @@ export function ResultsPanel({
   setPhone,
   isVoiceLoading,
   isWhatsAppLoading,
+  whatsAppFallbackLink,
   isPlaying,
   onPlay,
   onStop,
   onWhatsApp,
+  onWhatsAppFallback,
   onKnowMore
 }: Props) {
   const [severityInput, setSeverityInput] = useState<SeverityInput>({
@@ -255,6 +259,16 @@ export function ResultsPanel({
                 {labels.whatsapp}
               </button>
             </div>
+            {whatsAppFallbackLink && (
+              <button
+                type="button"
+                onClick={onWhatsAppFallback}
+                className="mt-3 inline-flex w-full items-center justify-center gap-2 rounded-2xl border border-leaf-200 bg-white px-5 py-3 text-sm font-black text-leaf-900 transition hover:border-leaf-500 hover:bg-leaf-50"
+              >
+                <MessageCircle className="h-5 w-5 text-leaf-600" />
+                Not received? Send again on WhatsApp
+              </button>
+            )}
           </div>
         )}
       </div>

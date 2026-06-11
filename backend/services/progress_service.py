@@ -1,7 +1,15 @@
 import json
 
 from api.config import get_settings
-from services.gemini_service import LANGUAGE_NAMES
+from services.gemini_service import (
+    LANGUAGE_NAMES,
+    PROVIDER_LABELS,
+    _configured_providers,
+    _next_guidance_provider,
+    _provider_available,
+    log_ai_provider,
+    log_ai_switch,
+)
 
 
 def _fallback_report(status: str, rule_summary: str, provider_error: str | None = None) -> dict:
@@ -63,31 +71,76 @@ Return ONLY valid JSON with these keys:
 """.strip()
 
 
+def _report_from_data(status: str, rule_summary: str, data: dict, source: str) -> dict:
+    next_steps = data.get("next_steps", [])
+    if not isinstance(next_steps, list):
+        next_steps = []
+    return {
+        "status": status,
+        "summary": str(data.get("summary", "")).strip() or rule_summary,
+        "next_steps": [str(item).strip() for item in next_steps if str(item).strip()][:3]
+        or _fallback_report(status, rule_summary)["next_steps"],
+        "source": source,
+        "provider_error": None,
+    }
+
+
 def generate_progress_report(payload) -> dict:
     settings = get_settings()
-    if not settings.gemini_api_key:
-        return _fallback_report(payload.status, payload.rule_summary)
+    provider_errors: list[str] = []
+    prompt = _build_progress_prompt(payload)
 
-    try:
-        import google.generativeai as genai
+    providers = [provider for provider in _configured_providers(settings) if provider in {"gemini", "groq", "deepseek", "static"}]
+    for index, provider in enumerate(providers):
+        if provider == "static":
+            break
+        if not _provider_available(settings, provider):
+            continue
 
-        genai.configure(api_key=settings.gemini_api_key)
-        model = genai.GenerativeModel(settings.gemini_model)
-        response = model.generate_content(
-            _build_progress_prompt(payload),
-            generation_config={"temperature": 0.25, "response_mime_type": "application/json"},
-        )
-        data = _parse_json_response(response.text)
-        next_steps = data.get("next_steps", [])
-        if not isinstance(next_steps, list):
-            next_steps = []
-        return {
-            "status": payload.status,
-            "summary": str(data.get("summary", "")).strip() or payload.rule_summary,
-            "next_steps": [str(item).strip() for item in next_steps if str(item).strip()][:3]
-            or _fallback_report(payload.status, payload.rule_summary)["next_steps"],
-            "source": "gemini",
-            "provider_error": None,
-        }
-    except Exception as exc:
-        return _fallback_report(payload.status, payload.rule_summary, f"Gemini: {exc}")
+        try:
+            if provider == "gemini":
+                import warnings
+
+                with warnings.catch_warnings():
+                    warnings.simplefilter("ignore", FutureWarning)
+                    import google.generativeai as genai
+
+                genai.configure(api_key=settings.gemini_api_key)
+                model = genai.GenerativeModel(settings.gemini_model)
+                response = model.generate_content(
+                    prompt,
+                    generation_config={"temperature": 0.25, "response_mime_type": "application/json"},
+                )
+                data = _parse_json_response(response.text)
+                log_ai_provider("Gemini", settings.gemini_model)
+                return _report_from_data(payload.status, payload.rule_summary, data, "gemini")
+
+            if provider == "groq":
+                from services.groq_service import generate_groq_json
+
+                data = generate_groq_json(
+                    prompt + "\n\nReturn compact JSON only. Do not include markdown fences or extra explanation.",
+                    max_tokens=600,
+                )
+                log_ai_provider("Groq", settings.groq_model)
+                return _report_from_data(payload.status, payload.rule_summary, data, "groq")
+
+            if provider == "deepseek":
+                from services.nvidia_service import generate_nvidia_json
+
+                data = generate_nvidia_json(
+                    prompt + "\n\nReturn compact JSON only. Do not include markdown fences or extra explanation.",
+                    max_tokens=600,
+                )
+                log_ai_provider("DeepSeek", settings.nvidia_model)
+                return _report_from_data(payload.status, payload.rule_summary, data, "nvidia-deepseek")
+        except Exception as exc:
+            provider_errors.append(f"{PROVIDER_LABELS[provider]}: {exc}")
+            log_ai_switch(PROVIDER_LABELS[provider], _next_guidance_provider(settings, providers, index), exc)
+
+    log_ai_provider("StaticFallback")
+    return _fallback_report(
+        payload.status,
+        payload.rule_summary,
+        " | ".join(provider_errors) if provider_errors else None,
+    )

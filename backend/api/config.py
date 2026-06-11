@@ -24,8 +24,22 @@ class Settings(BaseSettings):
 
     image_size: int = 224
 
+    ai_provider: str = "auto"
+    ai_provider_order: str = "gemini,groq,deepseek,ollama,static"
+
     gemini_api_key: str | None = None
     gemini_model: str = "gemini-2.0-flash"
+
+    groq_api_key: str | None = None
+    groq_base_url: str = "https://api.groq.com/openai/v1"
+    groq_model: str = "llama-3.1-8b-instant"
+    groq_timeout_seconds: int = 45
+
+    nvidia_api_key: str | None = None
+    nvidia_base_url: str = "https://integrate.api.nvidia.com/v1"
+    nvidia_model: str = "deepseek-ai/deepseek-v4-flash"
+    nvidia_timeout_seconds: int = 90
+    nvidia_thinking: bool = False
 
     ollama_enabled: bool = True
     ollama_base_url: str = "http://127.0.0.1:11434"

@@ -90,3 +90,5 @@ class WhatsAppResponse(BaseModel):
     message: str
     wa_link: str | None = None
     twilio_error: str | None = None
+    twilio_sid: str | None = None
+    twilio_status: str | None = None

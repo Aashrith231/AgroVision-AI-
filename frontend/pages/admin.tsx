@@ -187,6 +187,7 @@ export default function AdminPage() {
               <p className="mt-1 text-sm text-green-950/60">Shows whether each integration is configured, without exposing keys.</p>
               <div className="mt-5 grid gap-3 sm:grid-cols-2">
                 <ProviderPill label="Gemini guidance" active={Boolean(modelInfo?.providers.gemini_configured)} />
+                <ProviderPill label={`NVIDIA ${modelInfo?.providers.nvidia_model || "DeepSeek"}`.trim()} active={Boolean(modelInfo?.providers.nvidia_configured)} />
                 <ProviderPill label={`Ollama ${modelInfo?.providers.ollama_model || ""}`.trim()} active={Boolean(modelInfo?.providers.ollama_enabled)} />
                 <ProviderPill label="ElevenLabs voice" active={Boolean(modelInfo?.providers.elevenlabs_configured)} />
                 <ProviderPill label="Twilio WhatsApp" active={Boolean(modelInfo?.providers.twilio_configured)} />

@@ -18,6 +18,32 @@ import { diseaseToSlug } from "../utils/disease";
 import { analyzeImageQuality } from "../utils/imageQuality";
 import { fileToDataUrl, saveDiseaseHandoff, saveScanRecord } from "../utils/storage";
 
+function normalizeWhatsAppPhone(value: string) {
+  const cleaned = value.trim().replace(/[\s\-()]/g, "").replace(/^whatsapp:/, "");
+  const digits = cleaned.replace(/^\+/, "");
+  return digits && /^\d+$/.test(digits) ? digits : "";
+}
+
+function buildWhatsAppShareLink(phone: string, disease: string, confidence: number, treatment: string[], prevention: string[]) {
+  const treatmentText = treatment.slice(0, 4).map((item) => `- ${item}`).join("\n") || "- Verify symptoms before treatment.";
+  const preventionText = prevention.slice(0, 4).map((item) => `- ${item}`).join("\n") || "- Keep plants clean and avoid excess water.";
+  const message = [
+    "AgroVision AI Plant Doctor Result",
+    "",
+    `Disease: ${disease}`,
+    `Confidence: ${Math.round(confidence * 1000) / 10}%`,
+    "",
+    `Treatment:\n${treatmentText}`,
+    "",
+    `Prevention:\n${preventionText}`,
+    "",
+    "Please verify with field symptoms or a local agriculture expert before spraying."
+  ].join("\n");
+  const normalizedPhone = normalizeWhatsAppPhone(phone);
+  const target = normalizedPhone ? `/${normalizedPhone}` : "";
+  return `https://wa.me${target}?text=${encodeURIComponent(message)}`;
+}
+
 export default function Home() {
   const [language, setLanguage] = useState<Language>("en");
   const router = useRouter();
@@ -33,6 +59,7 @@ export default function Home() {
   const [isVoiceLoading, setIsVoiceLoading] = useState(false);
   const [isWhatsAppLoading, setIsWhatsAppLoading] = useState(false);
   const [isPlaying, setIsPlaying] = useState(false);
+  const [whatsAppFallbackLink, setWhatsAppFallbackLink] = useState<string | null>(null);
   const [imageQuality, setImageQuality] = useState<ImageQuality | null>(null);
   const [isCheckingQuality, setIsCheckingQuality] = useState(false);
   const audioRef = useRef<HTMLAudioElement | null>(null);
@@ -68,6 +95,7 @@ export default function Home() {
     setImageQuality(null);
     setPrediction(null);
     setGuidance(null);
+    setWhatsAppFallbackLink(null);
     setIsCheckingQuality(true);
     try {
       setImageQuality(await analyzeImageQuality(nextFile));
@@ -96,6 +124,7 @@ export default function Home() {
     setIsLoading(true);
     setPrediction(null);
     setGuidance(null);
+    setWhatsAppFallbackLink(null);
     try {
       const savedImage = imageDataUrl || (file ? await fileToDataUrl(file) : undefined);
       if (savedImage && !imageDataUrl) setImageDataUrl(savedImage);
@@ -163,8 +192,21 @@ export default function Home() {
         prevention: guidance.prevention,
         language
       });
-      if (response.wa_link) {
+      const fallbackLink =
+        response.wa_link || buildWhatsAppShareLink(phone, prediction.disease, prediction.confidence, guidance.treatment, guidance.prevention);
+      if (fallbackLink) {
+        setWhatsAppFallbackLink(fallbackLink);
+      }
+      if (response.wa_link && response.mode !== "twilio") {
         window.open(response.wa_link, "_blank", "noopener,noreferrer");
+      }
+      if (response.mode === "twilio" && response.twilio_sid) {
+        saveApiDiagnostic({
+          action: "Twilio WhatsApp request",
+          userMessage: "Twilio accepted the WhatsApp request. Delivery may still depend on sandbox or WhatsApp sender setup.",
+          apiBaseUrl: process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8000",
+          detail: `SID: ${response.twilio_sid}; Status: ${response.twilio_status || "unknown"}`
+        });
       }
       if (response.twilio_error) {
         saveApiDiagnostic({
@@ -175,7 +217,7 @@ export default function Home() {
         });
       }
       if (response.sent) {
-        toast.success("WhatsApp message sent by Twilio");
+        toast.success("Twilio accepted the request. Use backup button if it is not received.");
       } else if (response.twilio_error) {
         toast.error("WhatsApp direct send is unavailable. Opening share instead.");
       } else {
@@ -186,6 +228,11 @@ export default function Home() {
     } finally {
       setIsWhatsAppLoading(false);
     }
+  }
+
+  function handleWhatsAppFallback() {
+    if (!whatsAppFallbackLink) return;
+    window.open(whatsAppFallbackLink, "_blank", "noopener,noreferrer");
   }
 
   function handleKnowMore() {
@@ -236,11 +283,13 @@ export default function Home() {
           setPhone={setPhone}
           isVoiceLoading={isVoiceLoading}
           isWhatsAppLoading={isWhatsAppLoading}
+          whatsAppFallbackLink={whatsAppFallbackLink}
           isPlaying={isPlaying}
           language={language}
           onPlay={handlePlay}
           onStop={handleStop}
           onWhatsApp={handleWhatsApp}
+          onWhatsAppFallback={handleWhatsAppFallback}
           onKnowMore={handleKnowMore}
         />
         <InfoSections featuresTitle={t.features} howTitle={t.how} cropsTitle={t.crops} />
