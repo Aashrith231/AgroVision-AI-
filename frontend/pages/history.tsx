@@ -29,7 +29,7 @@ export default function HistoryPage() {
   return (
     <>
       <Head>
-        <title>Scan History | AgroVision AI</title>
+        <title>Scan History | RootSage AI</title>
       </Head>
       <Header brand={t.brand} language={language} setLanguage={setLanguage} />
       <main className="bg-leaf-50">

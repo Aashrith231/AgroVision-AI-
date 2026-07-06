@@ -33,7 +33,7 @@ export default function DiseaseDetailsPage() {
     let cancelled = false;
     async function loadDetails() {
       setIsLoading(true);
-      const storageKey = `agrovision:disease:${disease}:${language}`;
+      const storageKey = `rootsage:disease:${disease}:${language}`;
       const stored = typeof window !== "undefined" ? window.localStorage.getItem(storageKey) : null;
       if (stored) {
         try {
@@ -70,7 +70,7 @@ export default function DiseaseDetailsPage() {
   return (
     <>
       <Head>
-        <title>{`${displayName || "Disease Details"} | AgroVision AI`}</title>
+        <title>{`${displayName || "Disease Details"} | RootSage AI`}</title>
         <meta name="description" content={`Detailed farmer guidance for ${displayName}`} />
       </Head>
       <Header brand={t.brand} language={language} setLanguage={setLanguage} />

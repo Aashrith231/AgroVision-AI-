@@ -188,7 +188,7 @@ export default function ProgressPage() {
   return (
     <>
       <Head>
-        <title>Disease Progress Tracker | AgroVision AI</title>
+        <title>Disease Progress Tracker | RootSage AI</title>
         <meta
           name="description"
           content="Compare previous and current plant disease scans to track whether a plant appears to be improving, stable, worsening, or inconclusive."

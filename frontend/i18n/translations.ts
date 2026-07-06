@@ -8,7 +8,7 @@ export const languages: { code: Language; label: string }[] = [
 
 export const translations = {
   en: {
-    brand: "AgroVision AI",
+    brand: "RootSage AI",
     heroTitle: "AI plant doctor for every farmer",
     heroSubtitle: "Capture a leaf photo, get CNN-based disease detection, farmer-friendly treatment, voice help, and WhatsApp sharing in seconds.",
     uploadTitle: "Upload leaf image",
@@ -34,7 +34,7 @@ export const translations = {
     crops: "Supported crops"
   },
   hi: {
-    brand: "AgroVision AI",
+    brand: "RootSage AI",
     heroTitle: "हर किसान के लिए AI पौधा डॉक्टर",
     heroSubtitle: "पत्ती की फोटो लें, CNN से रोग पहचानें, आसान उपचार, आवाज सहायता और WhatsApp शेयरिंग पाएं।",
     uploadTitle: "पत्ती की तस्वीर अपलोड करें",
@@ -60,7 +60,7 @@ export const translations = {
     crops: "समर्थित फसलें"
   },
   te: {
-    brand: "AgroVision AI",
+    brand: "RootSage AI",
     heroTitle: "ప్రతి రైతుకు AI మొక్క వైద్యుడు",
     heroSubtitle: "ఆకు ఫోటో తీసి, CNN ద్వారా వ్యాధి గుర్తింపు, సులభమైన చికిత్స, వాయిస్ సహాయం, WhatsApp షేరింగ్ పొందండి.",
     uploadTitle: "ఆకు చిత్రాన్ని అప్లోడ్ చేయండి",

@@ -1,6 +1,6 @@
 {
-  "name": "AgroVision AI",
-  "short_name": "AgroVision",
+  "name": "RootSage AI",
+  "short_name": "RootSage",
   "description": "AI plant disease detection and farmer guidance.",
   "start_url": "/",
   "display": "standalone",
@@ -8,7 +8,7 @@
   "theme_color": "#16a34a",
   "icons": [
     {
-      "src": "/agrovision-icon.svg",
+      "src": "/rootsage-icon.svg",
       "sizes": "any",
       "type": "image/svg+xml",
       "purpose": "any maskable"

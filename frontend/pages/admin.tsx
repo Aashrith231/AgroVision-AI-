@@ -10,7 +10,7 @@ import { getApiBaseUrl, getHealth, getModelInfo } from "../services/api";
 import { ApiDiagnostic, ModelInfoResponse } from "../types";
 import { clearApiDiagnostics, getApiDiagnostics } from "../utils/adminDiagnostics";
 
-const ADMIN_TOKEN_KEY = "agrovision:admin-token";
+const ADMIN_TOKEN_KEY = "rootsage:admin-token";
 
 export default function AdminPage() {
   const [language, setLanguage] = useState<Language>("en");
@@ -90,11 +90,11 @@ export default function AdminPage() {
   return (
     <>
       <Head>
-        <title>Admin Model Info | AgroVision AI</title>
-        <meta name="description" content="Admin diagnostics and model configuration for AgroVision AI." />
+        <title>Admin Model Info | RootSage AI</title>
+        <meta name="description" content="Admin diagnostics and model configuration for RootSage AI." />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
       </Head>
-      <Header brand="AgroVision AI" language={language} setLanguage={setLanguage} />
+      <Header brand="RootSage AI" language={language} setLanguage={setLanguage} />
       <main className="bg-[#f6fbf4] py-10 sm:py-14">
         <section className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           {!isUnlocked && (
@@ -243,7 +243,7 @@ export default function AdminPage() {
           )}
         </section>
       </main>
-      <Footer brand="AgroVision AI" />
+      <Footer brand="RootSage AI" />
     </>
   );
 }

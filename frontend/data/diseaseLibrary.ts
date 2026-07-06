@@ -53,6 +53,6 @@ export const diseaseLibrary = trainedClasses.map((id) => {
       ? `${crop} leaves look healthy in this trained class. Keep monitoring and maintain clean field practices.`
       : crop === "Background"
         ? "Used to detect images that do not contain a clear plant leaf."
-        : `${name} is one of the trained disease classes supported by AgroVision AI.`
+        : `${name} is one of the trained disease classes supported by RootSage AI.`
   };
 });

@@ -23,7 +23,7 @@ export default function LibraryPage() {
   return (
     <>
       <Head>
-        <title>Disease Library | AgroVision AI</title>
+        <title>Disease Library | RootSage AI</title>
       </Head>
       <Header brand={t.brand} language={language} setLanguage={setLanguage} />
       <main className="bg-leaf-50">

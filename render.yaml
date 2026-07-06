@@ -1,14 +1,16 @@
 services:
   - type: web
-    name: agrovision-ai-backend
+    name: rootsage-ai-backend
     env: python
     rootDir: backend
     plan: starter
-    buildCommand: pip install -r requirements.txt
+    buildCommand: pip install --upgrade pip && pip install -r requirements.txt
     startCommand: uvicorn main:app --host 0.0.0.0 --port $PORT
     envVars:
+      - key: PYTHON_VERSION
+        value: "3.11.9"
       - key: APP_NAME
-        value: AgroVision AI
+        value: RootSage AI
       - key: ENVIRONMENT
         value: production
       - key: MODEL_PATH
@@ -21,3 +23,5 @@ services:
         value: "224"
       - key: OLLAMA_ENABLED
         value: "false"
+      - key: FRONTEND_ORIGINS
+        value: https://agrovision-ai-app-ten.vercel.app,https://agro-vision-ai-ochre.vercel.app

@@ -9,7 +9,7 @@ export default function App({ Component, pageProps }: AppProps) {
       <Head>
         <meta name="theme-color" content="#16a34a" />
         <link rel="manifest" href="/manifest.json" />
-        <link rel="icon" href="/agrovision-icon.svg" />
+        <link rel="icon" href="/rootsage-icon.svg" />
       </Head>
       <Component {...pageProps} />
       <Toaster position="top-center" toastOptions={{ duration: 3600 }} />

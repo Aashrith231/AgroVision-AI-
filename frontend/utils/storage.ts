@@ -1,10 +1,31 @@
 import { FollowUpReminder, GuidanceResponse, PredictionResponse, ProgressRecord, ScanRecord } from "../types";
 
-const HISTORY_KEY = "agrovision:scan-history";
-const REMINDER_KEY = "agrovision:follow-up-reminders";
-const PROGRESS_KEY = "agrovision:progress-records";
+const HISTORY_KEY = "rootsage:scan-history";
+const REMINDER_KEY = "rootsage:follow-up-reminders";
+const PROGRESS_KEY = "rootsage:progress-records";
+
+const LEGACY_STORAGE_KEYS: Record<string, string> = {
+  "agrovision:scan-history": HISTORY_KEY,
+  "agrovision:follow-up-reminders": REMINDER_KEY,
+  "agrovision:progress-records": PROGRESS_KEY,
+  "RootSage:scan-history": HISTORY_KEY,
+  "RootSage:follow-up-reminders": REMINDER_KEY,
+  "RootSage:progress-records": PROGRESS_KEY
+};
+
+function migrateLegacyStorage() {
+  if (typeof window === "undefined") return;
+  for (const [legacyKey, nextKey] of Object.entries(LEGACY_STORAGE_KEYS)) {
+    const value = window.localStorage.getItem(legacyKey);
+    if (value && !window.localStorage.getItem(nextKey)) {
+      window.localStorage.setItem(nextKey, value);
+    }
+    if (value) window.localStorage.removeItem(legacyKey);
+  }
+}
 
 export function getScanHistory(): ScanRecord[] {
+  migrateLegacyStorage();
   if (typeof window === "undefined") return [];
   try {
     return JSON.parse(window.localStorage.getItem(HISTORY_KEY) || "[]") as ScanRecord[];
@@ -75,7 +96,7 @@ export function saveProgressRecord(record: Omit<ProgressRecord, "id" | "createdA
 export function saveDiseaseHandoff(prediction: PredictionResponse, guidance: GuidanceResponse, language: string) {
   if (typeof window === "undefined") return;
   window.localStorage.setItem(
-    `agrovision:disease:${prediction.disease}:${language}`,
+    `rootsage:disease:${prediction.disease}:${language}`,
     JSON.stringify({ prediction, guidance, language, savedAt: Date.now() })
   );
 }

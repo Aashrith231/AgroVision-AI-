@@ -1,6 +1,6 @@
 import { ApiDiagnostic } from "../types";
 
-const DIAGNOSTICS_KEY = "agrovision:admin-diagnostics";
+const DIAGNOSTICS_KEY = "rootsage:admin-diagnostics";
 const MAX_DIAGNOSTICS = 30;
 
 export function saveApiDiagnostic(entry: Omit<ApiDiagnostic, "id" | "createdAt">) {

@@ -44,7 +44,7 @@ Do not commit secrets or `.env` files to GitHub.
 ## Backend Setup
 
 ```bash
-cd ~/agrovision/backend
+cd ~/RootSage/backend
 python3.11 -m venv .venv
 source .venv/bin/activate
 pip install -r requirements.txt
@@ -122,21 +122,21 @@ Gemini
 Create a systemd service:
 
 ```bash
-sudo nano /etc/systemd/system/agrovision-backend.service
+sudo nano /etc/systemd/system/RootSage-backend.service
 ```
 
 Example:
 
 ```ini
 [Unit]
-Description=AgroVision FastAPI Backend
+Description=RootSage FastAPI Backend
 After=network.target
 
 [Service]
 User=ubuntu
-WorkingDirectory=/home/ubuntu/agrovision/backend
-Environment="PATH=/home/ubuntu/agrovision/backend/.venv/bin"
-ExecStart=/home/ubuntu/agrovision/backend/.venv/bin/uvicorn main:app --host 127.0.0.1 --port 8000
+WorkingDirectory=/home/ubuntu/RootSage/backend
+Environment="PATH=/home/ubuntu/RootSage/backend/.venv/bin"
+ExecStart=/home/ubuntu/RootSage/backend/.venv/bin/uvicorn main:app --host 127.0.0.1 --port 8000
 Restart=always
 
 [Install]
@@ -147,9 +147,9 @@ Start it:
 
 ```bash
 sudo systemctl daemon-reload
-sudo systemctl enable agrovision-backend
-sudo systemctl start agrovision-backend
-sudo systemctl status agrovision-backend
+sudo systemctl enable RootSage-backend
+sudo systemctl start RootSage-backend
+sudo systemctl status RootSage-backend
 ```
 
 ## Nginx Reverse Proxy

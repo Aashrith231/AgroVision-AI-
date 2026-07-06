@@ -10,7 +10,10 @@ export function Footer({ brand }: { brand: string }) {
             {brand}
           </div>
           <p className="mt-2 max-w-2xl leading-6">
-            AI predictions should be verified with field symptoms before treatment. Use local agriculture expert advice for severe infections.
+            AI predictions should be verified with field symptoms before treatment. Use local agriculture expert advice for severe infections and before applying pesticides.
+          </p>
+          <p className="mt-2 max-w-2xl text-xs leading-5 text-green-950/55">
+            Privacy: scan history stays on this device only. Uploaded leaf images are analyzed by the server for diagnosis and are not stored in a user account.
           </p>
         </div>
         <div className="flex flex-wrap gap-2">

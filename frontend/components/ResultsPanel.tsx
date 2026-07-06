@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { Bell, BookOpen, CheckCircle2, ChevronDown, ChevronUp, MessageCircle, PauseCircle, PlayCircle, Send, Sparkles } from "lucide-react";
+import { Bell, BookOpen, CheckCircle2, ChevronDown, ChevronUp, MessageCircle, PauseCircle, PlayCircle, Send, Sparkles, TriangleAlert } from "lucide-react";
 import { Language } from "../i18n/translations";
 import { GuidanceResponse, PredictionResponse, SeverityInput } from "../types";
 import { displayDiseaseName } from "../utils/disease";
@@ -77,6 +77,14 @@ export function ResultsPanel({
 
   return (
     <section className="bg-leaf-50 py-14 sm:py-20">
+      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+        <div className="mb-6 flex gap-3 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm font-semibold leading-6 text-amber-950">
+          <TriangleAlert className="mt-0.5 h-5 w-5 shrink-0 text-amber-700" />
+          <p>
+            This result is for guidance only. Verify symptoms on the plant before treatment. Confirm pesticide use and dosage with a local agriculture expert. Confidence score shows model certainty, not disease severity.
+          </p>
+        </div>
+      </div>
       <div className="mx-auto grid max-w-7xl gap-6 px-4 sm:px-6 lg:grid-cols-[0.9fr_1.1fr] lg:px-8">
         <div className="rounded-3xl border border-leaf-100 bg-white p-5 shadow-soft sm:p-6">
           <div className="flex items-start justify-between gap-4">
@@ -89,7 +97,7 @@ export function ResultsPanel({
               <p className="mt-2 text-sm font-semibold leading-6 text-green-950/64">
                 {isBackground
                   ? "Please upload a close-up photo of a clear plant leaf for disease diagnosis."
-                  : "AgroVision AI identified this as the most likely disease from the uploaded leaf image."}
+                  : "RootSage AI identified this as the most likely disease from the uploaded leaf image."}
               </p>
             </div>
             <CheckCircle2 className="h-8 w-8 text-leaf-600" />

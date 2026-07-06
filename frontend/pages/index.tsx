@@ -28,7 +28,7 @@ function buildWhatsAppShareLink(phone: string, disease: string, confidence: numb
   const treatmentText = treatment.slice(0, 4).map((item) => `- ${item}`).join("\n") || "- Verify symptoms before treatment.";
   const preventionText = prevention.slice(0, 4).map((item) => `- ${item}`).join("\n") || "- Keep plants clean and avoid excess water.";
   const message = [
-    "AgroVision AI Plant Doctor Result",
+    "RootSage AI Plant Doctor Result",
     "",
     `Disease: ${disease}`,
     `Confidence: ${Math.round(confidence * 1000) / 10}%`,

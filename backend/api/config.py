@@ -9,7 +9,7 @@ BASE_DIR = Path(__file__).resolve().parents[1]
 
 
 class Settings(BaseSettings):
-    app_name: str = "AgroVision AI"
+    app_name: str = "RootSage AI"
     environment: str = "development"
     frontend_origins: str = "http://localhost:3000"
     allow_all_origins: bool = False

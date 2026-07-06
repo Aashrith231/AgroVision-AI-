@@ -26,7 +26,7 @@ def build_whatsapp_message(disease: str, confidence: float, treatment: list[str]
     treatment_text = "\n".join(f"- {item}" for item in treatment[:4]) or "- Verify symptoms before treatment."
     prevention_text = "\n".join(f"- {item}" for item in prevention[:4]) or "- Keep plants clean and avoid excess water."
     return (
-        "🌱 AgroVision AI Plant Doctor Result\n\n"
+        "🌱 RootSage AI Plant Doctor Result\n\n"
         f"🦠 Disease: {disease}\n"
         f"✅ Confidence: {round(confidence * 100, 1)}%\n\n"
         f"💊 Treatment:\n{treatment_text}\n\n"

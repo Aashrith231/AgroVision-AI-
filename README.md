@@ -1,6 +1,6 @@
-# AgroVision AI
+# RootSage AI
 
-AgroVision AI is an AI-powered farmer assistance platform for plant disease detection. It helps farmers identify plant leaf diseases from images and provides practical guidance for symptoms, prevention, treatment, severity, weather risk, and follow-up care.
+RootSage AI is an AI-powered farmer assistance platform for plant disease detection. It helps farmers identify plant leaf diseases from images and provides practical guidance for symptoms, prevention, treatment, severity, weather risk, and follow-up care.
 
 ## Overview
 
@@ -48,7 +48,7 @@ Treatment, prevention, symptoms, voice, WhatsApp sharing
 
 ## Guidance System
 
-AgroVision AI uses a fallback-based guidance system:
+RootSage AI uses a fallback-based guidance system:
 
 ```text
 Gemini API
