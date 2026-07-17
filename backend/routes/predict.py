@@ -30,6 +30,24 @@ async def predict(
         raise HTTPException(status_code=413, detail=f"Image must be smaller than {settings.max_upload_mb} MB.")
 
     try:
-        return predictor.predict(image_bytes, mode=mode)
+        prediction = predictor.predict(image_bytes, mode=mode)
+        
+        # Run OpenCV Leaf analysis for disease area percentage and overlay image
+        try:
+            from services.leaf_analysis_service import analyze_leaf_severity
+            analysis = analyze_leaf_severity(image_bytes)
+            if analysis.get("leaf_detected", False):
+                prediction["leaf_detected"] = True
+                prediction["affected_area_percentage"] = analysis["affected_area_percentage"]
+                prediction["color_severity"] = analysis["severity"]
+                prediction["overlay_image"] = analysis["overlay_image"]
+            else:
+                prediction["leaf_detected"] = False
+        except Exception as leaf_exc:
+            print(f"[Leaf Analysis Error] {leaf_exc}", flush=True)
+            prediction["leaf_detected"] = False
+
+        return prediction
     except Exception as exc:
         raise HTTPException(status_code=500, detail=str(exc)) from exc
+

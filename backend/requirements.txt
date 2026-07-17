@@ -11,3 +11,5 @@ elevenlabs==1.13.1
 gTTS==2.5.4
 twilio==9.4.1
 requests==2.32.3
+opencv-python-headless==4.10.0.84
+

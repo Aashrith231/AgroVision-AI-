@@ -12,6 +12,10 @@ export type PredictionResponse = {
   confidence_level: "high" | "medium" | "low";
   warning?: string | null;
   top_predictions: PredictionItem[];
+  leaf_detected?: boolean;
+  affected_area_percentage?: number;
+  color_severity?: string;
+  overlay_image?: string;
 };
 
 export type GuidanceResponse = {
@@ -82,6 +86,9 @@ export type ProgressReportRequest = {
     scan_date?: string | null;
     guidance_summary?: string | null;
     disease_summary?: string | null;
+    affected_area_percentage?: number | null;
+    color_severity?: string | null;
+    leaf_detected?: boolean | null;
   };
   current: {
     disease: string;
@@ -91,6 +98,9 @@ export type ProgressReportRequest = {
     scan_date?: string | null;
     guidance_summary?: string | null;
     disease_summary?: string | null;
+    affected_area_percentage?: number | null;
+    color_severity?: string | null;
+    leaf_detected?: boolean | null;
   };
   status: ProgressStatus;
   rule_summary: string;

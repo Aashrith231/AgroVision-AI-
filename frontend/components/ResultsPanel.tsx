@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { Bell, BookOpen, CheckCircle2, ChevronDown, ChevronUp, MessageCircle, PauseCircle, PlayCircle, Send, Sparkles, TriangleAlert } from "lucide-react";
+import { Bell, BookOpen, CheckCircle2, ChevronDown, ChevronUp, Eye, MessageCircle, PauseCircle, PlayCircle, Send, Sparkles, TriangleAlert } from "lucide-react";
 import { Language } from "../i18n/translations";
 import { GuidanceResponse, PredictionResponse, SeverityInput } from "../types";
 import { displayDiseaseName } from "../utils/disease";
@@ -36,6 +36,7 @@ type Props = {
   onWhatsApp: () => void;
   onWhatsAppFallback: () => void;
   onKnowMore: () => void;
+  previewUrl?: string | null;
 };
 
 export function ResultsPanel({
@@ -52,7 +53,8 @@ export function ResultsPanel({
   onStop,
   onWhatsApp,
   onWhatsAppFallback,
-  onKnowMore
+  onKnowMore,
+  previewUrl
 }: Props) {
   const [severityInput, setSeverityInput] = useState<SeverityInput>({
     affectedLeaves: "few",
@@ -62,6 +64,7 @@ export function ResultsPanel({
   const [reminderSaved, setReminderSaved] = useState(false);
   const [showAlternatives, setShowAlternatives] = useState(false);
   const severity = useMemo(() => calculateSeverity(severityInput), [severityInput]);
+  const [showOverlay, setShowOverlay] = useState(true);
 
   if (!prediction) {
     return null;
@@ -116,6 +119,56 @@ export function ResultsPanel({
               </div>
             </div>
           </div>
+
+          {prediction.leaf_detected && prediction.affected_area_percentage !== undefined && (
+            <div className="mt-6 rounded-3xl border border-leaf-100 bg-white p-4">
+              <h3 className="font-black text-leaf-900">Leaf Color Diagnostics</h3>
+              <div className="mt-3 grid grid-cols-2 gap-3 text-sm">
+                <div className="rounded-2xl bg-leaf-50 p-3">
+                  <span className="text-xs font-black uppercase tracking-wide text-green-950/52">Affected Leaf Area</span>
+                  <p className="text-lg font-black text-leaf-900 mt-0.5">{prediction.affected_area_percentage}%</p>
+                </div>
+                <div className="rounded-2xl bg-leaf-50 p-3">
+                  <span className="text-xs font-black uppercase tracking-wide text-green-950/52">Calculated Severity</span>
+                  <p className="text-lg font-black text-leaf-900 mt-0.5">{prediction.color_severity}</p>
+                </div>
+              </div>
+              
+              {prediction.overlay_image && (
+                <div className="relative h-64 w-full overflow-hidden rounded-2xl bg-leaf-50 border border-leaf-100 mt-4">
+                  <img 
+                    src={showOverlay ? prediction.overlay_image : (previewUrl || "")} 
+                    alt="Segmented Leaf Preview" 
+                    className="object-cover h-full w-full"
+                  />
+                </div>
+              )}
+
+              <div className="mt-3 flex flex-wrap gap-2 justify-between items-center">
+                {prediction.overlay_image && (
+                  <button
+                    type="button"
+                    onClick={() => setShowOverlay((val) => !val)}
+                    className="inline-flex items-center gap-2 rounded-xl bg-leaf-600 hover:bg-leaf-700 text-white font-bold px-3.5 py-1.5 text-xs transition"
+                  >
+                    <Eye className="h-4 w-4" />
+                    {showOverlay ? "Show Original" : "Show Disease Mask"}
+                  </button>
+                )}
+                <div className="flex gap-3 text-xs font-bold text-green-950/70">
+                  <span className="flex items-center gap-1">
+                    <span className="h-2 w-2 rounded-full bg-green-500" /> Healthy
+                  </span>
+                  <span className="flex items-center gap-1">
+                    <span className="h-2 w-2 rounded-full bg-yellow-400" /> Mild
+                  </span>
+                  <span className="flex items-center gap-1">
+                    <span className="h-2 w-2 rounded-full bg-red-600" /> Severe
+                  </span>
+                </div>
+              </div>
+            </div>
+          )}
 
           {alternativePredictions.length > 0 && (
             <div className="mt-5">
