@@ -134,7 +134,10 @@ export default function ProgressPage() {
             model_mode: selectedScan.prediction.model_mode,
             scan_date: selectedScan.createdAt,
             guidance_summary: selectedScan.guidance.explanation,
-            disease_summary: rule.previousMeta?.summary
+            disease_summary: rule.previousMeta?.summary,
+            affected_area_percentage: selectedScan.prediction.affected_area_percentage ?? null,
+            color_severity: selectedScan.prediction.color_severity ?? null,
+            leaf_detected: selectedScan.prediction.leaf_detected ?? null
           },
           current: {
             disease: prediction.disease,
@@ -143,7 +146,10 @@ export default function ProgressPage() {
             model_mode: prediction.model_mode,
             scan_date: savedCurrentScan.createdAt,
             guidance_summary: guidance.explanation,
-            disease_summary: rule.currentMeta?.summary
+            disease_summary: rule.currentMeta?.summary,
+            affected_area_percentage: prediction.affected_area_percentage ?? null,
+            color_severity: prediction.color_severity ?? null,
+            leaf_detected: prediction.leaf_detected ?? null
           },
           status: rule.status,
           rule_summary: rule.summary,
@@ -398,7 +404,11 @@ function ScanPreview({ title, record }: { title: string; record: ScanRecord }) {
         <p className="text-xs font-black uppercase tracking-[0.16em] text-leaf-600">{title}</p>
         <h3 className="mt-1 text-xl font-black text-leaf-900">{displayDiseaseName(record.prediction.disease)}</h3>
         <div className="mt-3 grid gap-2 text-sm font-semibold text-green-950/68 sm:grid-cols-2">
-          <InfoPill label="Confidence" value={`${Math.round(record.prediction.confidence * 100)}%`} />
+          {record.prediction.affected_area_percentage !== undefined && record.prediction.leaf_detected !== false ? (
+            <InfoPill label="Affected Area" value={`${record.prediction.affected_area_percentage}%`} />
+          ) : (
+            <InfoPill label="Confidence" value={`${Math.round(record.prediction.confidence * 100)}%`} />
+          )}
           <InfoPill label="Date" value={new Date(record.createdAt).toLocaleDateString()} />
         </div>
       </div>
@@ -455,10 +465,15 @@ function ProgressCard({ record, currentScan }: { record: ProgressRecord; current
 }
 
 function MiniScanCard({ title, record }: { title: string; record: ScanRecord }) {
+  const [showOverlay, setShowOverlay] = useState(true);
+  const hasOverlay = !!record.prediction.overlay_image;
+
   return (
     <div className="rounded-2xl border border-leaf-100 bg-leaf-50 p-3">
       <div className="relative h-36 overflow-hidden rounded-xl bg-white">
-        {record.imageDataUrl ? (
+        {record.prediction.overlay_image && showOverlay ? (
+          <img src={record.prediction.overlay_image} alt={`${title} leaf overlay`} className="object-cover h-full w-full" />
+        ) : record.imageDataUrl ? (
           <Image src={record.imageDataUrl} alt={`${title} leaf`} fill className="object-cover" sizes="(max-width: 640px) 100vw, 220px" />
         ) : (
           <div className="grid h-full place-items-center text-leaf-600">
@@ -468,8 +483,25 @@ function MiniScanCard({ title, record }: { title: string; record: ScanRecord }) 
       </div>
       <p className="mt-3 text-xs font-black uppercase tracking-[0.16em] text-leaf-600">{title}</p>
       <h3 className="mt-1 font-black text-leaf-900">{displayDiseaseName(record.prediction.disease)}</h3>
-      <p className="mt-2 text-sm font-semibold text-green-950/64">Confidence {Math.round(record.prediction.confidence * 100)}%</p>
-      <p className="mt-1 text-xs font-bold uppercase tracking-[0.12em] text-green-950/45">{new Date(record.createdAt).toLocaleString()}</p>
+      
+      {record.prediction.affected_area_percentage !== undefined && record.prediction.leaf_detected !== false ? (
+        <p className="mt-2 text-sm font-semibold text-green-950/64">Affected Area: {record.prediction.affected_area_percentage}%</p>
+      ) : (
+        <p className="mt-2 text-sm font-semibold text-green-950/64">Confidence {Math.round(record.prediction.confidence * 100)}%</p>
+      )}
+
+      <div className="mt-2 flex items-center justify-between gap-2">
+        <p className="text-xs font-bold uppercase tracking-[0.12em] text-green-950/45">{new Date(record.createdAt).toLocaleDateString()}</p>
+        {hasOverlay && (
+          <button 
+            type="button" 
+            onClick={() => setShowOverlay(!showOverlay)} 
+            className="text-[10px] font-black uppercase tracking-wider text-leaf-700 hover:text-leaf-900 bg-white border border-leaf-100 rounded px-1.5 py-0.5 transition"
+          >
+            {showOverlay ? "Original" : "Highlights"}
+          </button>
+        )}
+      </div>
     </div>
   );
 }

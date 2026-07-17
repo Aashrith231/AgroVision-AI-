@@ -60,6 +60,10 @@ export function analyzeProgress(previous: PredictionResponse, current: Predictio
   let status: ProgressStatus = "Inconclusive";
   let summary = "The two scans do not provide enough consistent evidence to judge progress confidently.";
 
+  const prevPct = previous.affected_area_percentage;
+  const currPct = current.affected_area_percentage;
+  const hasAreaStats = prevPct !== undefined && currPct !== undefined && previous.leaf_detected !== false && current.leaf_detected !== false;
+
   if (isNonLeaf(previous.disease) || isNonLeaf(current.disease)) {
     reasons.push("One scan does not contain a clear leaf image.");
     summary = "Progress is inconclusive because one of the scans may not show a clear plant leaf.";
@@ -69,6 +73,33 @@ export function analyzeProgress(previous: PredictionResponse, current: Predictio
   } else if (!sameCrop) {
     reasons.push(`The scans appear to belong to different crops: ${previousCrop} and ${currentCrop}.`);
     summary = "Progress is inconclusive because the previous and current scans may not be from the same crop or plant type.";
+  } else if (hasAreaStats) {
+    const pctDelta = currPct - prevPct;
+    reasons.push(`Previous infected leaf area: ${prevPct}%. Current infected leaf area: ${currPct}%.`);
+    
+    if (!previousHealthy && currentHealthy) {
+      status = "Improving";
+      reasons.push("The previous scan detected a disease, while the current scan is classified as healthy.");
+      summary = `The plant appears to be improving because the latest scan changed from ${previousName} to a healthy class. Confirm this with visible symptoms on the same plant.`;
+    } else if (previousHealthy && !currentHealthy) {
+      status = "Worsening";
+      reasons.push("The previous scan was healthy, while the current scan detected a disease.");
+      summary = `The plant may be worsening because the latest scan changed from healthy to ${currentName}. Check whether new symptoms are visible.`;
+    } else if (pctDelta <= -2.0) {
+      status = "Improving";
+      const recoveryRate = prevPct > 0 ? Math.round(((prevPct - currPct) / prevPct) * 100) : 100;
+      reasons.push("Calculated disease area percentage decreased significantly.");
+      summary = `The leaf condition appears to be improving. The affected area decreased from ${prevPct}% to ${currPct}% (a ${recoveryRate}% recovery). Confirm this with visible symptoms on the plant.`;
+    } else if (pctDelta >= 2.0) {
+      status = "Worsening";
+      const worseningRate = prevPct > 0 ? Math.round(((currPct - prevPct) / prevPct) * 100) : 100;
+      reasons.push("Calculated disease area percentage increased significantly.");
+      summary = `The leaf condition may be worsening. The affected area increased from ${prevPct}% to ${currPct}% (a ${worseningRate}% increase in infected area). Inspect the plant and nearby leaves.`;
+    } else {
+      status = "Stable";
+      reasons.push("Disease area percentage remained relatively stable.");
+      summary = `The condition appears stable. The affected area remains close to previous values (changed from ${prevPct}% to ${currPct}%). Continue regular monitoring and field hygiene.`;
+    }
   } else if (!previousHealthy && currentHealthy) {
     status = "Improving";
     reasons.push("The previous scan detected a disease, while the current scan is classified as healthy.");

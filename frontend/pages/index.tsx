@@ -291,6 +291,7 @@ export default function Home() {
           onWhatsApp={handleWhatsApp}
           onWhatsAppFallback={handleWhatsAppFallback}
           onKnowMore={handleKnowMore}
+          previewUrl={previewUrl}
         />
         <InfoSections featuresTitle={t.features} howTitle={t.how} cropsTitle={t.crops} />
       </main>
