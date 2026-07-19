@@ -40,6 +40,12 @@ def _parse_json_response(text: str) -> dict:
 
 def _build_progress_prompt(payload) -> str:
     language_name = LANGUAGE_NAMES.get(payload.language, "English")
+    
+    prev_area = f"{payload.previous.affected_area_percentage}%" if payload.previous.affected_area_percentage is not None else "Not available"
+    prev_sev = payload.previous.color_severity or "Not available"
+    curr_area = f"{payload.current.affected_area_percentage}%" if payload.current.affected_area_percentage is not None else "Not available"
+    curr_sev = payload.current.color_severity or "Not available"
+
     return f"""
 You are an agricultural assistant helping a farmer compare two plant disease scans.
 Write a short, practical progress report in {language_name}.
@@ -47,11 +53,14 @@ Write a short, practical progress report in {language_name}.
 Important safety rule:
 - Confidence score indicates model certainty only. It does not directly represent disease severity.
 - Do not say disease severity increased or decreased only because confidence changed.
+- Use the provided "Affected Leaf Area" and "Segmented Severity" from pixel analysis as the true measure of disease progress.
 
 Previous scan:
 - Disease: {payload.previous.disease}
 - Confidence: {round(payload.previous.confidence * 100, 1)}%
 - Date: {payload.previous.scan_date or "Unknown"}
+- Affected Leaf Area: {prev_area}
+- Segmented Severity: {prev_sev}
 - Guidance summary: {payload.previous.guidance_summary or "Not available"}
 - Disease information: {payload.previous.disease_summary or "Not available"}
 
@@ -59,6 +68,8 @@ Current scan:
 - Disease: {payload.current.disease}
 - Confidence: {round(payload.current.confidence * 100, 1)}%
 - Date: {payload.current.scan_date or "Unknown"}
+- Affected Leaf Area: {curr_area}
+- Segmented Severity: {curr_sev}
 - Guidance summary: {payload.current.guidance_summary or "Not available"}
 - Disease information: {payload.current.disease_summary or "Not available"}
 

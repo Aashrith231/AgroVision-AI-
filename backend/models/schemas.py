@@ -17,6 +17,13 @@ class PredictionResponse(BaseModel):
     confidence_level: str
     warning: str | None = None
     top_predictions: list[PredictionItem]
+    
+    # OpenCV Leaf Analysis results
+    leaf_detected: bool = True
+    affected_area_percentage: float | None = None
+    color_severity: str | None = None
+    overlay_image: str | None = None
+
 
 
 class GuidanceRequest(BaseModel):
@@ -44,6 +51,10 @@ class ProgressPredictionPayload(BaseModel):
     scan_date: str | None = None
     guidance_summary: str | None = None
     disease_summary: str | None = None
+    affected_area_percentage: float | None = None
+    color_severity: str | None = None
+    leaf_detected: bool | None = None
+
 
 
 class ProgressReportRequest(BaseModel):
