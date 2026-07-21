@@ -96,62 +96,54 @@ def _report_from_data(status: str, rule_summary: str, data: dict, source: str) -
     }
 
 
+def _generate_static_response(payload) -> dict:
+    status = payload.status
+
+    status_templates = {
+        "improving": {
+            "summary": f"Your {payload.previous.disease} condition is improving. The plant is recovering well.",
+            "next_steps": [
+                "Continue with your current treatment regimen for another week.",
+                "Monitor the plant closely with follow-up photos to track continued recovery.",
+                "Once fully recovered, maintain preventive measures to avoid reinfection."
+            ]
+        },
+        "worsening": {
+            "summary": f"Your {payload.current.disease} condition is worsening. Immediate action is needed.",
+            "next_steps": [
+                "Increase treatment frequency and consider alternative fungicides or pesticides.",
+                "Isolate affected plants from healthy ones if possible.",
+                "Contact a local agriculture expert for immediate assistance."
+            ]
+        },
+        "stable": {
+            "summary": f"Your {payload.current.disease} condition appears stable. Monitor for any changes.",
+            "next_steps": [
+                "Continue your current treatment plan without changes.",
+                "Take photos every 2-3 days to ensure the condition doesn't worsen.",
+                "Maintain good field hygiene and environmental conditions."
+            ]
+        },
+        "unknown": {
+            "summary": "Unable to determine clear progress between the two scans.",
+            "next_steps": [
+                "Ensure future photos are taken under similar lighting and angle for better comparison.",
+                "Consult the disease guide for more information about the identified condition.",
+                "Contact an agriculture specialist if symptoms are unclear."
+            ]
+        }
+    }
+
+    template = status_templates.get(status, status_templates["unknown"])
+    return {
+        "status": status,
+        "summary": template["summary"],
+        "next_steps": template["next_steps"],
+        "source": "static",
+        "provider_error": None,
+    }
+
+
 def generate_progress_report(payload) -> dict:
-    settings = get_settings()
-    provider_errors: list[str] = []
-    prompt = _build_progress_prompt(payload)
-
-    providers = [provider for provider in _configured_providers(settings) if provider in {"gemini", "groq", "deepseek", "static"}]
-    for index, provider in enumerate(providers):
-        if provider == "static":
-            break
-        if not _provider_available(settings, provider):
-            continue
-
-        try:
-            if provider == "gemini":
-                import warnings
-
-                with warnings.catch_warnings():
-                    warnings.simplefilter("ignore", FutureWarning)
-                    import google.generativeai as genai
-
-                genai.configure(api_key=settings.gemini_api_key)
-                model = genai.GenerativeModel(settings.gemini_model)
-                response = model.generate_content(
-                    prompt,
-                    generation_config={"temperature": 0.25, "response_mime_type": "application/json"},
-                )
-                data = _parse_json_response(response.text)
-                log_ai_provider("Gemini", settings.gemini_model)
-                return _report_from_data(payload.status, payload.rule_summary, data, "gemini")
-
-            if provider == "groq":
-                from services.groq_service import generate_groq_json
-
-                data = generate_groq_json(
-                    prompt + "\n\nReturn compact JSON only. Do not include markdown fences or extra explanation.",
-                    max_tokens=600,
-                )
-                log_ai_provider("Groq", settings.groq_model)
-                return _report_from_data(payload.status, payload.rule_summary, data, "groq")
-
-            if provider == "deepseek":
-                from services.nvidia_service import generate_nvidia_json
-
-                data = generate_nvidia_json(
-                    prompt + "\n\nReturn compact JSON only. Do not include markdown fences or extra explanation.",
-                    max_tokens=600,
-                )
-                log_ai_provider("DeepSeek", settings.nvidia_model)
-                return _report_from_data(payload.status, payload.rule_summary, data, "nvidia-deepseek")
-        except Exception as exc:
-            provider_errors.append(f"{PROVIDER_LABELS[provider]}: {exc}")
-            log_ai_switch(PROVIDER_LABELS[provider], _next_guidance_provider(settings, providers, index), exc)
-
     log_ai_provider("StaticFallback")
-    return _fallback_report(
-        payload.status,
-        payload.rule_summary,
-        " | ".join(provider_errors) if provider_errors else None,
-    )
+    return _generate_static_response(payload)

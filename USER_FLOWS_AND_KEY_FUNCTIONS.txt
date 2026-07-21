@@ -1,0 +1,1187 @@
+================================================================================
+ROOTSAGE AI - USER FLOWS AND KEY FUNCTIONS (TEXT FORMAT)
+================================================================================
+
+This document provides a detailed breakdown of user journeys and key functions
+that power each feature. Use this to understand the codebase and add new
+farmer-focused features.
+
+================================================================================
+SECTION 1: USER JOURNEY FLOWS
+================================================================================
+
+FLOW 1: DISEASE DIAGNOSIS (Main Feature)
+-----------------------------------------
+User Goal: "Take a leaf photo → Get disease prediction + treatment advice"
+
+Step 1: User lands on home page (index.tsx)
+Step 2: Selects crop type (Normal Crops or Medicinal Plants)
+Step 3: Selects language (English / Hindi / Telugu)
+Step 4: Uploads leaf image via camera or drag-drop
+Step 5: Frontend checks image quality (brightness, sharpness)
+        - Shows "Good", "Warning", or "Bad" status
+Step 6: User clicks "Analyze Image"
+Step 7: Frontend sends POST /predict request to backend
+        - Includes: file + mode="crop" or "medicinal"
+Step 8: Backend processes the image
+        - Validates: JPG/PNG only, file size <8MB
+        - Loads Keras CNN model (EfficientNetB0.h5 for crops)
+        - Preprocesses: EXIF correction, resize to 224x224, normalize pixels
+        - Runs inference
+        - Returns: disease name, confidence score, top 3 predictions
+        - ALSO runs OpenCV analysis for leaf damage (affected area %)
+Step 9: Frontend receives prediction
+        - Saves to browser localStorage (ScanRecord)
+        - Shows ResultsPanel with:
+          * Disease name (bold, large)
+          * Confidence % (with disclaimer: NOT severity)
+          * Top-3 alternative predictions
+          * Leaf affected area % (from OpenCV)
+          * Color-based severity overlay image
+Step 10: Frontend automatically calls guidance generation
+         - POST /generate-guidance with disease + language
+Step 11: Backend generates farmer-friendly guidance
+         - Tries Gemini API first (gemini-2.0-flash)
+         - Falls back to Groq API if Gemini fails
+         - Falls back to NVIDIA NIM DeepSeek if Groq fails
+         - Falls back to local Ollama (offline option)
+         - Falls back to local disease dictionary (static JSON)
+         - Returns: symptoms, prevention, treatment, advice, weather risk tips
+Step 12: Frontend displays guidance in tabbed interface
+         - Tab 1: Symptoms
+         - Tab 2: Prevention
+         - Tab 3: Treatment
+         - Tab 4: Advice
+Step 13: User can click "Play" to hear voice explanation
+         - Frontend calls POST /voice
+         - Backend uses ElevenLabs API (multilingual) or falls back to gTTS
+         - Returns: base64 encoded audio
+         - Frontend plays audio in browser
+Step 14: User can enter phone number and click "Send to WhatsApp"
+         - Frontend builds WhatsApp message with treatment + prevention
+         - Two options:
+           a) Direct link: wa.me/?text=... (opens in browser/phone)
+           b) Via Twilio SMS: POST /send-whatsapp
+         - Message includes: disease name, confidence %, treatment, prevention
+Step 15: User can click "Know More" to see full disease details
+         - Routes to /disease/[name] dynamic page
+         - Shows full description from disease library
+Step 16: Entire scan is saved to browser localStorage with:
+         - UUID, timestamp, image (base64), disease, confidence, mode
+
+
+FLOW 2: VIEW SCAN HISTORY
+-------------------------
+User Goal: "See all my past leaf scans"
+
+Step 1: User navigates to /history page
+Step 2: Frontend loads all scans from browser localStorage
+        - Also loads any follow-up reminders
+Step 3: Displays list of all past scans as cards with:
+        - Thumbnail of leaf image
+        - Disease name
+        - Confidence score
+        - Date/time scanned
+Step 4: User can:
+        - Click on a scan to view details
+        - Click "Track Progress" to compare with new scan
+        - Mark reminder as completed
+        - Delete individual scans
+        - Clear entire history (with confirmation)
+
+
+FLOW 3: TRACK DISEASE PROGRESS (Heuristic Comparison)
+------------------------------------------------------
+User Goal: "Compare two scans to see if plant is improving/worsening"
+
+Step 1: User navigates to /progress page
+Step 2: Frontend shows:
+        - Left panel: list of all past scans
+        - Right panel: preview of selected scan
+Step 3: User selects first scan (e.g., diseased leaf from 5 days ago)
+Step 4: User uploads second scan (current leaf condition)
+Step 5: Frontend runs client-side analysis
+        - Checks if both predictions have valid confidence
+        - Compares disease names:
+          * Disease → Healthy = "Improving" (good sign)
+          * Same disease = "Stable" (no progress)
+          * Healthy → Disease = "Worsening" (bad sign)
+          * Low confidence on either = "Inconclusive"
+Step 6: Frontend calls POST /progress-report to backend
+        - Sends: scan1 data, scan2 data, language, client analysis result
+Step 7: Backend LLM generates explanation
+        - Uses same provider fallback chain (Gemini → Groq → NVIDIA → Ollama → local dict)
+        - Creates contextual text summary in target language
+        - Returns: status, summary text, next-step recommendations
+Step 8: Frontend displays comparison
+        - Shows side-by-side images
+        - Colored status badge (green=improving, yellow=stable, red=worsening)
+        - LLM-generated summary text
+        - Important disclaimer: "Confidence is model certainty, NOT disease severity"
+Step 9: User can save this comparison as ProgressRecord
+        - Saves scan1_id, scan2_id, status, timestamp to localStorage
+
+
+FLOW 4: LEARN DISEASE INFORMATION
+----------------------------------
+User Goal: "Browse all supported diseases and learn about them"
+
+Step 1: User navigates to /library page
+Step 2: Frontend loads all 36 disease entries from diseaseLibrary.ts
+Step 3: Shows grid of disease cards for:
+        - Apples (Scab, Black Rot, Cedar Apple Rust, Healthy)
+        - Potatoes (Early Blight, Late Blight, Healthy)
+        - Tomatoes (6 diseases + Healthy)
+        - Corn, Grapes, Peach, Pepper, Raspberry, etc.
+Step 4: User can search by crop name or disease name
+        - Real-time filtering of disease cards
+Step 5: User clicks on any disease card
+        - Routes to /disease/[slug]?lang=en
+Step 6: Dynamic disease detail page shows:
+        - Crop name
+        - Disease name
+        - Full description (translated to selected language)
+        - Category (fungal, bacterial, viral, etc.)
+        - Summary of symptoms
+        - All text is in i18n format (English, Hindi, Telugu)
+
+
+FLOW 5: CHECK LOCAL WEATHER RISK
+---------------------------------
+User Goal: "Know if current weather is risky for my crop disease"
+
+Step 1: User is viewing a disease prediction result
+Step 2: WeatherRiskCard component appears
+Step 3: Component requests browser geolocation (user approves)
+Step 4: Calls Open-Meteo weather API with coordinates
+Step 5: Receives current weather data:
+        - Humidity %
+        - Rainfall amount (mm)
+        - Wind speed (km/h)
+Step 6: Frontend calculates risk score:
+        - If humidity >= 80%: HIGH RISK for fungal diseases
+        - If rain > 0 mm: Warning against spraying pesticide now
+        - If wind >= 18 km/h: Warning about pesticide spray drift
+Step 7: Displays risk card with:
+        - Weather icons
+        - Clear text warnings
+        - Farmer-friendly recommendations
+        - "Wait for rain to stop before spraying"
+        - "High humidity: fungal risk. Spray preventive today"
+
+
+================================================================================
+SECTION 2: BACKEND API ENDPOINTS (KEY FUNCTIONS)
+================================================================================
+
+ENDPOINT 1: POST /predict
+------------------------
+Purpose: Predict disease from leaf image
+
+Input:
+  - file: image file (JPG or PNG only, <8MB)
+  - mode: string, either "crop" or "medicinal"
+
+Processing:
+  1. Validate file type (must be JPG/PNG)
+  2. Validate file size (must be <8MB)
+  3. Load appropriate Keras model:
+     - If mode="crop": models/EfficientNetB0.h5 (36 classes)
+     - If mode="medicinal": models/medicinal_disease_recognition_model.h5 (13 classes)
+  4. Preprocess image:
+     - Fix EXIF orientation (rotate if taken sideways on phone)
+     - Resize to 224x224 pixels
+     - Normalize pixel values (-1 to 1 range)
+  5. Run Keras model.predict() to get predictions
+  6. Extract top-3 predictions with confidence scores
+  7. NEW: Run OpenCV analysis for leaf damage:
+     - Detect if leaf is present in image
+     - Calculate affected area percentage (diseased vs healthy pixels)
+     - Determine severity level (mild/moderate/severe)
+     - Generate visual overlay image showing affected areas
+  8. Return JSON response
+
+Output:
+{
+  "disease": "Tomato___Leaf_Blight",
+  "confidence": 0.87,
+  "top_3": [
+    {"name": "Tomato___Leaf_Blight", "score": 0.87},
+    {"name": "Tomato___Early_Blight", "score": 0.09},
+    {"name": "Tomato___healthy", "score": 0.04}
+  ],
+  "affected_area_percentage": 35.5,
+  "color_severity": "moderate",
+  "overlay_image": "data:image/png;base64,...",
+  "leaf_detected": true
+}
+
+Error Codes:
+  - 400: Invalid image format (not JPG/PNG)
+  - 413: Image too large (>8MB)
+  - 500: Model prediction failed
+
+Code Location: backend/routes/predict.py, backend/inference/predictor.py
+
+
+ENDPOINT 2: POST /generate-guidance
+-----------------------------------
+Purpose: Generate farmer-friendly advice for detected disease
+
+Input:
+{
+  "disease": "Tomato___Leaf_Blight",
+  "language": "hi"  (en, hi, or te)
+}
+
+Processing:
+  1. Create prompt for AI: "Give farmer-friendly advice for [disease] in [language]"
+  2. Try providers in sequence (stop at first success):
+
+     Provider 1: Gemini API
+     - Model: gemini-2.0-flash
+     - API key: GEMINI_API_KEY from .env
+     - Format: JSON response
+     - Timeout: 30 seconds
+
+     Provider 2: Groq API (fallback)
+     - Model: llama-3.1-8b-instant
+     - API key: GROQ_API_KEY
+     - Timeout: 20 seconds
+
+     Provider 3: NVIDIA NIM DeepSeek (fallback)
+     - Model: deepseek-ai/deepseek-v4-flash
+     - API key: NVIDIA_API_KEY
+     - Timeout: 20 seconds
+
+     Provider 4: Ollama local (offline fallback)
+     - URL: http://localhost:11434 or OLLAMA_API_BASE
+     - Model: qwen2.5-coder:7b
+     - No internet needed
+     - Timeout: 60 seconds
+
+     Provider 5: Local disease dictionary (ultimate fallback)
+     - Static JSON file: backend/services/local_disease_dictionary.py
+     - Contains pre-written advice for all 36 disease classes
+     - No internet needed, 100% reliable
+
+  3. Parse LLM response into structured JSON
+  4. Return guidance
+
+Output:
+{
+  "disease": "Tomato___Leaf_Blight",
+  "language": "hi",
+  "explanation": "यह एक कवक रोग है जो पत्तियों को प्रभावित करता है...",
+  "symptoms": [
+    "पत्तियों पर भूरे धब्बे",
+    "पत्तियों का मुड़ना",
+    "पौधे का मुरझाना"
+  ],
+  "prevention": [
+    "स्वस्थ बीज खरीदें",
+    "फसल चक्र अपनाएं",
+    "पत्तियों को सूखा रखें"
+  ],
+  "treatment": [
+    "ट्राइसाइक्लोजोल स्प्रे लगाएं",
+    "7 दिन के अंतराल पर दोहराएं",
+    "सुबह/शाम का समय सही है"
+  ],
+  "advice": "इस रोग को तुरंत नियंत्रित करें...",
+  "severity_indicator": "high",
+  "weather_risk_tips": ["ज्यादा नमी में खतरा"],
+  "follow_up_days": 7
+}
+
+Error Codes:
+  - 400: Invalid disease or language
+  - 500: All providers failed (returns local dictionary as fallback)
+
+Code Location: backend/routes/guidance.py, backend/services/gemini_service.py
+
+
+ENDPOINT 3: POST /voice
+------------------------
+Purpose: Generate audio explanation in farmer's language
+
+Input:
+{
+  "disease": "Tomato___Leaf_Blight",
+  "treatment": ["Spray fungicide", "Repeat every 7 days"],
+  "prevention": ["Use clean seeds", "Maintain dry leaves"],
+  "language": "hi"
+}
+
+Processing:
+  1. Build text script from input:
+     "Disease: [disease]. Treatment: [treatment list]. Prevention: [prevention list]"
+  2. Try voice providers:
+
+     Provider 1: ElevenLabs API
+     - Model: eleven_multilingual_v2 (supports 30+ languages)
+     - API key: ELEVENLABS_API_KEY
+     - Auto-selects voice for language (male/female farmer voice)
+     - Returns: MP3 audio file
+
+     Provider 2: gTTS (Google Text-to-Speech)
+     - Fallback if ElevenLabs unavailable
+     - Supports: English, Hindi, Telugu
+     - Returns: MP3 audio file
+  3. Encode audio to base64
+  4. Return response
+
+Output:
+{
+  "audio_base64": "//NExAA+/IECxIABM...",  [base64 encoded MP3]
+  "language": "hi",
+  "provider": "elevenlabs"
+}
+
+Error Codes:
+  - 500: Voice generation failed (returns empty audio)
+
+Code Location: backend/routes/voice.py, backend/services/voice_service.py
+
+
+ENDPOINT 4: POST /send-whatsapp
+--------------------------------
+Purpose: Share disease results via WhatsApp
+
+Input:
+{
+  "phone": "919876543210",  [with country code]
+  "disease": "Tomato___Leaf_Blight",
+  "confidence": 0.87,
+  "treatment": ["Spray fungicide", "Repeat in 7 days"],
+  "prevention": ["Use clean seeds"]
+}
+
+Processing:
+  1. Format message text:
+     "RootSage AI Plant Doctor Result
+      Disease: [disease]
+      Confidence: [%]
+      Treatment: [list]
+      Prevention: [list]
+      Please verify with local agriculture expert before spraying."
+
+  2. Try sending methods:
+
+     Method 1: Twilio SMS API
+     - API key: TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN
+     - Sends WhatsApp message directly to phone
+     - Requires WhatsApp number registration
+
+     Method 2: wa.me link (fallback)
+     - Generates WhatsApp direct link
+     - User clicks → opens WhatsApp and pre-fills message
+
+  3. Return response
+
+Output:
+{
+  "success": true,
+  "message_id": "SM1234567890abcdef",
+  "whatsapp_link": "https://wa.me/919876543210?text=RootSage..."
+}
+
+Error Codes:
+  - 400: Invalid phone format
+  - 500: Twilio failed (but returns wa.me link as fallback)
+
+Code Location: backend/routes/whatsapp.py, backend/services/whatsapp_service.py
+
+
+ENDPOINT 5: POST /progress-report
+----------------------------------
+Purpose: Analyze disease progress over time (LLM-based)
+
+Input:
+{
+  "scan1": {
+    "disease": "Tomato___Leaf_Blight",
+    "confidence": 0.85,
+    "crop": "Tomato",
+    "date": "2024-01-15"
+  },
+  "scan2": {
+    "disease": "Tomato___healthy",
+    "confidence": 0.92,
+    "crop": "Tomato",
+    "date": "2024-01-22"
+  },
+  "language": "en",
+  "client_status": "Improving"
+}
+
+Processing:
+  1. Calculate days between scans
+  2. Create LLM prompt:
+     "A farmer scanned leaf on [date1]: [disease1] (confidence [conf1])
+      Farmer scanned again on [date2]: [disease2] (confidence [conf2])
+      Client analysis shows: [status]
+      Generate [language] summary for farmer"
+
+  3. Use same LLM provider chain as /generate-guidance:
+     Gemini → Groq → NVIDIA → Ollama → local dict
+
+  4. LLM generates contextual text in target language
+  5. Return response
+
+Output:
+{
+  "status": "Improving",
+  "summary": "Great news! Your tomato plant is recovering. The disease is reducing...",
+  "next_steps": [
+    "Continue current treatment for 2 more days",
+    "Maintain dry leaves",
+    "Monitor for new symptoms"
+  ],
+  "days_apart": 7,
+  "confidence_disclaimer": "Note: Confidence score shows model certainty, not disease severity"
+}
+
+Code Location: backend/routes/progress.py, backend/services/progress_service.py
+
+
+================================================================================
+SECTION 3: FRONTEND PAGES AND COMPONENTS
+================================================================================
+
+PAGE 1: index.tsx (Main Diagnosis Page)
+---------------------------------------
+Location: frontend/pages/index.tsx
+
+What it shows:
+  - Header with app name, language selector
+  - Hero section with instructions
+  - Image uploader (drag-drop or camera)
+  - Crop type selector (Normal Crops / Medicinal Plants)
+  - Results panel (after prediction)
+  - AI guidance panel (after guidance generation)
+  - Weather risk card
+  - WhatsApp share section
+
+Key State Variables:
+  - language: "en" | "hi" | "te"
+  - file: File object or null
+  - prediction: contains disease, confidence, top_3, affected_area, etc.
+  - guidance: contains symptoms, prevention, treatment, advice, etc.
+  - imageQuality: shows brightness/sharpness analysis
+  - modelMode: "crop" or "medicinal"
+  - isLoading: true while waiting for prediction
+  - isVoiceLoading: true while generating voice
+  - isWhatsAppLoading: true while sharing
+
+Key Functions:
+  - handleFile(file): User selected an image
+    * Creates preview URL
+    * Converts to base64 for storage
+    * Analyzes image quality (brightness, sharpness)
+
+  - handleAnalyzeImage(): User clicked "Analyze"
+    * Calls POST /predict
+    * Receives disease prediction, confidence, affected_area, overlay
+    * Saves to localStorage
+    * Automatically calls handleGenerateGuidance()
+
+  - handleGenerateGuidance(): Get AI advice
+    * Calls POST /generate-guidance
+    * Receives symptoms, prevention, treatment, advice
+    * Displays in tabbed interface
+
+  - handlePlayVoice(): User clicked "Play"
+    * Calls POST /voice
+    * Receives base64 audio
+    * Plays in browser
+
+  - handleWhatsAppShare(): User entered phone and clicked send
+    * Builds message text (disease, confidence, treatment, prevention)
+    * Generates wa.me link OR calls POST /send-whatsapp
+    * Opens WhatsApp or shows link
+
+  - handleKnowMore(): User clicked "Know More"
+    * Routes to /disease/[name] page
+    * Passes disease name and image data
+
+Sub-components used:
+  - ImageUploader: Camera/drag-drop file picker
+  - ResultsPanel: Shows disease name, confidence, top-3, affected area %
+  - InfoSections: Tabbed guidance (symptoms, prevention, treatment, advice)
+  - WeatherRiskCard: Weather-based risk assessment
+
+
+PAGE 2: progress.tsx (Disease Progress Tracker)
+-----------------------------------------------
+Location: frontend/pages/progress.tsx
+
+What it shows:
+  - List of past scans on left side
+  - Preview of selected scan
+  - File uploader for new scan
+  - Side-by-side comparison of two scans
+  - Progress status (Improving/Stable/Worsening/Inconclusive)
+  - LLM-generated analysis text
+
+Key State Variables:
+  - history: array of all past ScanRecords from localStorage
+  - selectedId: UUID of first scan for comparison
+  - file: second scan to compare
+  - currentScan: prediction result of second scan
+  - activeRecord: saved ProgressRecord from localStorage
+
+Key Functions:
+  - handleFile(file): User selected second scan
+    * Creates preview
+    * Converts to base64
+
+  - handleAnalyze(): Compare two scans
+    * Calls POST /predict on new image
+    * Gets prediction for scan 2
+    * Calls analyzeProgress() for client-side analysis
+    * Determines: Improving / Stable / Worsening / Inconclusive
+    * Calls POST /progress-report for LLM analysis
+    * Displays results
+
+  - handleSaveRecord(): Save comparison result
+    * Saves ProgressRecord to localStorage
+    * User can view history of past comparisons
+
+Sub-components used:
+  - Scan list selector
+  - Image preview side-by-side
+  - Status badge (colored: green/yellow/red)
+
+
+PAGE 3: history.tsx (Scan History)
+-----------------------------------
+Location: frontend/pages/history.tsx
+
+What it shows:
+  - List of all past scans as cards
+  - Scan thumbnail, disease, confidence, date
+  - Follow-up reminders section
+  - Button to clear all history
+
+Key Functions:
+  - refresh(): Load all scans from localStorage
+  - handleClearHistory(): Delete all scans (with confirmation)
+  - handleUpdateReminder(id, status): Mark reminder as done
+
+Sub-components used:
+  - Scan card grid
+  - Reminder section
+
+
+PAGE 4: library.tsx (Disease Knowledge Base)
+---------------------------------------------
+Location: frontend/pages/library.tsx
+
+What it shows:
+  - Grid of all 36 disease cards
+  - Search box (filters by crop name or disease name)
+  - Real-time search results
+
+Key Functions:
+  - Filter diseaseLibrary array based on search query
+  - Route to /disease/[name] when card clicked
+
+Key Data:
+  - diseaseLibrary: array from data/diseaseLibrary.ts with 36 entries
+
+
+PAGE 5: disease/[name].tsx (Disease Detail Page)
+-------------------------------------------------
+Location: frontend/pages/disease/[name].tsx
+
+What it shows:
+  - Disease name and crop
+  - Full disease description
+  - Symptoms list
+  - Prevention tips
+  - Treatment methods
+  - All text in selected language (en/hi/te)
+
+Key Functions:
+  - Map URL slug to diseaseLibrary entry
+  - Display all metadata in i18n format
+
+
+================================================================================
+SECTION 4: KEY FRONTEND COMPONENTS (REUSABLE UI)
+================================================================================
+
+COMPONENT 1: ImageUploader.tsx
+------------------------------
+Purpose: Allow user to upload image via camera or file picker
+
+Props:
+  - onFile: function that receives File object
+  - onQuality: function that receives ImageQuality analysis
+  - disabled: disable component (show loading state)
+
+What it does:
+  1. Shows drag-drop zone with camera button
+  2. When user selects image:
+     - Analyzes image quality (brightness, sharpness)
+     - Shows status: "Good" (green) / "Warning" (yellow) / "Bad" (red)
+     - Calls onFile() callback with File
+     - Calls onQuality() callback with quality data
+  3. Shows image preview
+
+Key Functions:
+  - analyzeImageQuality(file): Canvas analysis
+    * Reads pixel data
+    * Calculates average brightness (0-255)
+    * Calculates edge sharpness using Laplacian approximation
+    * Returns: {brightness, sharpness, status}
+
+  - handleDrop(): Process drag-dropped files
+  - handleCameraCapture(): Mobile camera
+  - handleFileInput(): File picker
+
+
+COMPONENT 2: ResultsPanel.tsx
+-----------------------------
+Purpose: Display disease prediction results
+
+Props:
+  - prediction: PredictionResponse object
+  - guidance: GuidanceResponse object or null
+  - onGenerateGuidance(): function to call when generating guidance
+  - onPlayVoice(): function to play voice
+  - onKnowMore(): function to route to disease detail
+
+What it shows:
+  - Large disease name
+  - Confidence % with disclaimer box
+  - Top-3 predictions (with alternative options)
+  - Affected area percentage (from OpenCV)
+  - Color severity indicator (mild/moderate/severe)
+  - Action buttons:
+    * "Generate Guidance" (calls LLM)
+    * "Play Voice" (text-to-speech)
+    * "Know More" (details page)
+    * "Share via WhatsApp"
+
+
+COMPONENT 3: InfoSections.tsx
+------------------------------
+Purpose: Display AI guidance in tabbed format
+
+Props:
+  - guidance: GuidanceResponse with symptoms, prevention, treatment, advice
+  - language: "en" | "hi" | "te"
+
+What it shows:
+  - 4 tabs:
+    1. Symptoms tab: List of visible signs farmer should look for
+    2. Prevention tab: How to avoid this disease
+    3. Treatment tab: How to treat if infected
+    4. Advice tab: Additional farmer-friendly tips
+  - Weather risk tips section
+  - Follow-up reminder suggestion
+
+Key Functions:
+  - Switch between tabs
+  - Display bullet-point lists from guidance JSON
+
+
+COMPONENT 4: WeatherRiskCard.tsx
+--------------------------------
+Purpose: Show local weather-based disease risk
+
+What it does:
+  1. Requests geolocation (browser permission)
+  2. Calls Open-Meteo weather API with coordinates
+  3. Analyzes weather data:
+     - If humidity >= 80%: HIGH fungal risk
+     - If rain > 0 mm: Don't spray now
+     - If wind >= 18 km/h: Spray drift risk
+  4. Displays risk warnings with icons
+
+What it shows:
+  - Current humidity %
+  - Current rainfall
+  - Current wind speed
+  - Colored warning panels (red/yellow/green)
+  - Farmer-friendly recommendations
+
+
+================================================================================
+SECTION 5: DATA STORAGE (LOCALSTORAGE)
+================================================================================
+
+All data is stored in browser localStorage (NOT on server).
+
+Storage Key 1: scanHistory
+-------------------------
+Format: Array of ScanRecord objects
+
+Structure:
+[
+  {
+    id: "UUID-string-here",
+    createdAt: "2024-01-20T10:30:00Z",
+    disease: "Tomato___Leaf_Blight",
+    confidence: 0.87,
+    crop: "Tomato",
+    mode: "crop",
+    imageDataUrl: "data:image/png;base64,...",
+    modelMode: "crop"
+  },
+  { ... more scans ... }
+]
+
+How to use:
+  - Get all scans: getScanHistory()
+  - Save new scan: saveScanRecord(scanRecord)
+  - Delete scan: deleteFromScanHistory(id)
+  - Clear all: clearScanHistory()
+
+Functions in: frontend/utils/storage.ts
+
+
+Storage Key 2: progressRecords
+-----------------------------
+Format: Array of ProgressRecord objects
+
+Structure:
+[
+  {
+    id: "UUID-string-here",
+    createdAt: "2024-01-22T15:45:00Z",
+    scan1Id: "UUID-of-first-scan",
+    scan2Id: "UUID-of-second-scan",
+    status: "Improving",  (or Stable, Worsening, Inconclusive)
+    summary: "Your plant is recovering well...",
+    llmAnalysis: "Full text from LLM backend",
+    language: "en"
+  },
+  { ... more comparisons ... }
+]
+
+How to use:
+  - Get all progress records: getProgressRecords()
+  - Save new comparison: saveProgressRecord(record)
+
+
+Storage Key 3: followUpReminders
+--------------------------------
+Format: Array of FollowUpReminder objects
+
+Structure:
+[
+  {
+    id: "UUID-string-here",
+    createdAt: "2024-01-20T10:30:00Z",
+    scanId: "UUID-of-scan",
+    remindAfterDays: 7,  (check plant after 7 days)
+    status: "pending",  (or "completed")
+    notes: "Check for new symptoms"
+  },
+  { ... more reminders ... }
+]
+
+How to use:
+  - Get all reminders: getReminders()
+  - Update reminder: updateReminder(id, {status: "completed"})
+
+
+================================================================================
+SECTION 6: HOW TO ADD NEW FEATURES FOR FARMER USERS
+================================================================================
+
+STEP 1: DEFINE THE PROBLEM AND USER FLOW
+-----------------------------------------
+Ask yourself:
+  - What farmer problem does this solve?
+  - What data do they need to input?
+  - Where should results be shown?
+  - Should data persist (localStorage)?
+  - Is it a one-time action or repeatable?
+
+Example: "Farmers want to know which pesticide works best for their disease"
+
+User flow:
+  1. User selects a disease (or uses detected disease)
+  2. User selects their pesticide brand preference
+  3. App shows recommended pesticides with dosage and safety tips
+  4. User can mark "I used this" to track what worked
+
+
+STEP 2: ADD BACKEND ROUTE (If you need backend logic)
+------------------------------------------------------
+Create file: backend/routes/my_feature.py
+
+Template:
+  from fastapi import APIRouter
+  from models.schemas import MyRequest, MyResponse
+  from services.my_feature_service import process_my_feature
+
+  router = APIRouter(tags=["myfeature"])
+
+  @router.post("/my-endpoint", response_model=MyResponse)
+  def my_endpoint(payload: MyRequest) -> dict:
+      return process_my_feature(payload)
+
+Then update backend/main.py:
+  app.include_router(my_feature.router)
+
+
+STEP 3: ADD BACKEND SERVICE (If using LLM or complex logic)
+-----------------------------------------------------------
+Create file: backend/services/my_feature_service.py
+
+Template:
+  from services.gemini_service import generate_guidance
+
+  def process_my_feature(payload):
+      # Use LLM fallback chain pattern:
+      llm_result = generate_guidance(
+          disease=payload.disease,
+          language=payload.language,
+          prompt="Custom prompt for pesticides..."
+      )
+
+      # Or implement custom logic
+      result = {
+          "recommendations": [...],
+          "language": payload.language
+      }
+
+      return result
+
+Remember: Always use the LLM fallback chain!
+  Try: Gemini → Groq → NVIDIA → Ollama → Local Dictionary
+  Never assume one provider will work.
+
+
+STEP 4: ADD FRONTEND API FUNCTION
+----------------------------------
+Update file: frontend/services/api.ts
+
+Add:
+  export async function myFeatureCall(data): Promise<MyResponse> {
+    try {
+      const { data: response } = await api.post("/my-endpoint", data)
+      return response
+    } catch (error) {
+      throw normalizeApiError(error, "My Feature")
+    }
+  }
+
+
+STEP 5: ADD FRONTEND PAGE OR COMPONENT
+---------------------------------------
+Option A: Create new page (frontend/pages/my_feature.tsx)
+Option B: Add to existing page (e.g., index.tsx)
+
+Key requirements:
+  1. Use useTranslation() hook for i18n (en/hi/te)
+  2. Use Lucide React icons (consistent with app)
+  3. Use Tailwind CSS (consistent styling)
+  4. Handle loading states (isLoading, isError)
+  5. Show error messages in farmer-friendly language
+  6. Save data to localStorage if needed
+
+Template:
+  import { useTranslation } from "../hooks/useTranslation"
+  import { myFeatureCall } from "../services/api"
+  import { useState } from "react"
+
+  export default function MyFeature() {
+    const [language, setLanguage] = useState("en")
+    const t = useTranslation(language)
+    const [isLoading, setIsLoading] = useState(false)
+
+    async function handleAnalyze() {
+      setIsLoading(true)
+      try {
+        const result = await myFeatureCall({
+          disease: "...",
+          language: language
+        })
+        // Display result
+      } catch (error) {
+        toast.error(error.message)  // Farmer-safe error message
+      } finally {
+        setIsLoading(false)
+      }
+    }
+
+    return (
+      <main>
+        {/* UI here */}
+      </main>
+    )
+  }
+
+
+STEP 6: ADD TRANSLATIONS (i18n)
+--------------------------------
+Update file: frontend/i18n/translations.ts
+
+Add keys for your feature in all 3 languages:
+  en: {
+    myFeatureTitle: "Pesticide Recommendation",
+    myFeatureButton: "Find Best Pesticide",
+    ...
+  },
+  hi: {
+    myFeatureTitle: "कीटनाशक सिफारिश",
+    myFeatureButton: "सर्वश्रेष्ठ कीटनाशक खोजें",
+    ...
+  },
+  te: {
+    myFeatureTitle: "కీటకనాశక సిఫారసు",
+    myFeatureButton: "ఉత్తమ కీటకనాశకను కనుగొనండి",
+    ...
+  }
+
+
+STEP 7: ADD DATA STORAGE (If persisting data)
+----------------------------------------------
+Update file: frontend/utils/storage.ts
+
+Add functions:
+  export function saveMyFeatureData(data) {
+    const items = JSON.parse(localStorage.getItem("myFeatureData") || "[]")
+    items.push(data)
+    localStorage.setItem("myFeatureData", JSON.stringify(items))
+  }
+
+  export function getMyFeatureData() {
+    return JSON.parse(localStorage.getItem("myFeatureData") || "[]")
+  }
+
+
+STEP 8: UPDATE HEADER NAVIGATION
+---------------------------------
+Update file: frontend/components/Header.tsx
+
+Add navigation link to new feature:
+  <Link href="/my_feature">
+    {t.myFeatureTitle}
+  </Link>
+
+
+================================================================================
+SECTION 7: FEATURE IDEAS FOR REAL KISAN USERS
+================================================================================
+
+IDEA 1: PESTICIDE RECOMMENDATION ENGINE
+----------------------------------------
+Problem: Farmers don't know which pesticide to use for which disease
+
+Implementation:
+  Backend:
+    - Create POST /recommend-pesticide
+    - Takes: disease, crop, language
+    - Uses LLM to generate: pesticide options, dosage, safety warnings
+    - Returns: list of recommended pesticides with details
+
+  Frontend:
+    - New page /pesticide-finder
+    - Show disease from scan OR user selects disease
+    - Call /recommend-pesticide endpoint
+    - Display results with: pesticide name, cost, availability, steps
+    - Add "I used this" checkbox to save to localStorage
+
+  Farmer value: Know exactly what to buy at market
+  Data stored: Which pesticides work best (track success)
+
+
+IDEA 2: CROP-SPECIFIC TREATMENT TIMELINE
+------------------------------------------
+Problem: Farmers don't know WHEN to apply treatment (depends on crop stage)
+
+Implementation:
+  Frontend:
+    - Ask: "What stage is your crop?" (seedling/vegetative/flowering/fruiting)
+    - Call new POST /treatment-timeline endpoint
+    - Backend: Uses LLM to generate week-by-week treatment plan
+    - Display: Calendar view with: "Day 3: Apply fungicide", "Day 10: Monitor", etc.
+    - Set reminders: "Spray treatment today"
+
+  Farmer value: Know exactly when to act (too early = waste, too late = crop loss)
+  Data stored: Reminder dates
+
+
+IDEA 3: FARMER MARKET PRICES INTEGRATION
+------------------------------------------
+Problem: Farmers lose income when crops get diseased; they need economic motivation
+
+Implementation:
+  Frontend:
+    - Show: "Expected harvest date: 45 days"
+    - Show: "Current market price: 15 rupees/kg"
+    - Show: "Estimated yield loss if untreated: 40%"
+    - Calculate: "Cost to treat: 500 rupees vs Loss: 2000 rupees"
+    - Call Apni Mandi API or commodity price service
+
+  Farmer value: See ROI of treating disease
+  Data stored: Harvest dates, expected yield
+
+
+IDEA 4: COMMUNITY DISEASE HOTSPOT MAP
+--------------------------------------
+Problem: Farmers don't know if disease is spreading in their region
+
+Implementation:
+  Backend:
+    - When scan is done, send anonymous: geolocation + disease to server
+    - Create POST /disease-hotspots?region=... endpoint
+    - Server aggregates anonymously (no personal data)
+    - Returns: "X farmers detected this disease nearby last week"
+    - Show on map: red zones = high disease activity
+
+  Frontend:
+    - Add map view on library page
+    - Show disease hotspots in region
+    - Alert: "Tomato Blight rising in your area!"
+
+  Farmer value: Know when to be extra preventive
+
+
+IDEA 5: SOIL-BASED DISEASE PREVENTION
+--------------------------------------
+Problem: Some diseases relate to soil conditions (pH, moisture, nutrients)
+
+Implementation:
+  Frontend:
+    - Add questions: "Have you tested soil?" "Soil pH?" "Soil type?"
+    - Call POST /soil-based-advice with: disease + soil_pH + soil_moisture
+    - Backend: Use LLM to generate soil-specific prevention
+    - Return: "Your soil is alkaline (pH 7.8) → more susceptible to X disease"
+
+  Farmer value: Link disease to preventable soil conditions
+
+
+IDEA 6: YIELD LOSS PREDICTION
+------------------------------
+Problem: Farmers want to know crop damage impact before deciding to treat
+
+Implementation:
+  Backend:
+    - POST /predict-yield-loss
+    - Takes: disease, severity (from OpenCV %), days_to_harvest
+    - Uses LLM: "Based on {disease} at {severity}%, expected yield loss is {X}%"
+    - Calculate: Cost to treat vs potential loss
+
+  Frontend:
+    - Show after prediction: "Untreated, you could lose 2000kg = 30,000 rupees"
+    - Decision: "Treat now (500 rupees cost) or accept loss?"
+
+  Farmer value: Economic ROI for treatment decision
+
+
+IDEA 7: FARMER DIARY & MULTI-FIELD MANAGEMENT
+-----------------------------------------------
+Problem: Farmers manage multiple fields but current app only tracks global history
+
+Implementation:
+  Frontend:
+    - Add field management page: "Field 1: North Plot", "Field 2: South Plot"
+    - When scanning, select which field
+    - History grouped by field (not mixed together)
+    - Quick action: "Same disease in Field 1? Copy treatment to Field 2"
+
+  Data stored:
+    - ScanRecord now includes: fieldId, fieldName
+    - FieldProfile: {id, name, area, crop}
+
+  Farmer value: Manage multiple plots without confusion
+
+
+IDEA 8: WEATHER-TRIGGERED ALERTS
+----------------------------------
+Problem: Certain weather triggers disease (high humidity = fungal growth)
+
+Implementation:
+  Frontend:
+    - When user enables geolocation, also enable weather alerts
+    - Backend: Set weather thresholds per crop
+    - When conditions met, send notification: "Humidity rising to 85% → fungal risk in 2 days"
+    - Use browser push notifications (with permission)
+
+  Data stored:
+    - Crop thresholds: {humidity: 80, rain: 5mm, wind: 18kmh}
+
+  Farmer value: Prevent disease before it starts
+
+
+IDEA 9: ORGANIC vs CHEMICAL ADVISOR
+------------------------------------
+Problem: Some farmers prefer organic, some chemical - current app doesn't distinguish
+
+Implementation:
+  Frontend:
+    - New preference: "Treatment preference: Organic / Chemical / Both"
+    - Save to localStorage
+    - When generating guidance, include preference
+    - Show comparison: "Neem spray (organic, 2 weeks) vs Fungicide (chemical, 5 days)"
+
+  Backend:
+    - Modify LLM prompt to include: "Farmer prefers {organic/chemical/both}"
+    - LLM filters treatment recommendations
+
+  Farmer value: Guidance matches their farming philosophy
+
+
+IDEA 10: FARMER-TO-EXPERT CHAT
+-------------------------------
+Problem: AI sometimes fails (low confidence); farmers need human backup
+
+Implementation:
+  Frontend:
+    - If confidence < 40%, show button: "Chat with agriculture expert?"
+    - Clicking: Opens WhatsApp/email with pre-filled scan details
+    - Expert replies with verified diagnosis
+    - Save expert reply to scan record (for learning)
+
+  Backend:
+    - Export scan + AI guidance to WhatsApp message
+    - Message includes: image, disease prediction, confidence, guidance
+    - Expert can append: "Not this disease. It's actually X. Do Y."
+
+  Farmer value: Safety net when AI uncertain
+
+
+================================================================================
+SECTION 8: KEY TAKEAWAYS FOR ADDING FEATURES
+================================================================================
+
+DO:
+  ✓ Ask: "Does this solve a real KISAN (farmer) problem?"
+  ✓ Provide all features in 3 languages (en/hi/te)
+  ✓ Use localStorage for offline capability
+  ✓ Use the LLM fallback chain (always have local dict fallback)
+  ✓ Keep UI simple (farmers may have low digital literacy)
+  ✓ Use big buttons, clear icons (Lucide React)
+  ✓ Show farmer-friendly error messages (not technical)
+  ✓ Test on mobile (farmers use smartphones)
+  ✓ Include safety disclaimers (always consult local expert)
+
+DON'T:
+  ✗ Don't assume internet always available
+  ✗ Don't collect unnecessary personal data
+  ✗ Don't use small text or complex UI
+  ✗ Don't require real-time cloud storage
+  ✗ Don't make single LLM provider your only option
+  ✗ Don't display "model confidence" as "disease severity"
+  ✗ Don't overload one scan with too much metadata
+  ✗ Don't make features only for desktop (mobile-first)
+
+BEFORE DEPLOYMENT:
+  - Test on college server (COLLEGE_SERVER_DEPLOYMENT.md)
+  - Test with 5-10 real farmers
+  - Get feedback on translations (professional translator for hi/te)
+  - Check that all LLM fallbacks actually work
+  - Verify localStorage limits (max 5-10MB per browser)
+
+
+================================================================================
+END OF DOCUMENT
+================================================================================

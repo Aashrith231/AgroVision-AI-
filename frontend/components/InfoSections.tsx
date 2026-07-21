@@ -24,7 +24,7 @@ const steps = [
   { title: "Share", text: "Send the result by WhatsApp or keep it in scan history." }
 ];
 
-const crops = ["Apple", "Corn", "Grape", "Potato", "Tomato", "Cherry", "Peach", "Pepper", "Strawberry", "Soybean", "Squash", "Orange"];
+const crops = ["Apple", "Corn", "Grape", "Potato", "Tomato", "Cherry", "Peach", "Pepper", "Strawberry", "Soybean", "Squash", "Orange", "Camphor", "Haritaki", "Neem", "Sojina"];
 
 export function InfoSections({ featuresTitle, howTitle, cropsTitle }: Props) {
   return (
@@ -84,6 +84,7 @@ export function InfoSections({ featuresTitle, howTitle, cropsTitle }: Props) {
           <div>
             <p className="text-sm font-black uppercase tracking-[0.18em] text-leaf-700">Training coverage</p>
             <h2 className="mt-3 text-3xl font-black text-[#14351f] sm:text-4xl">{cropsTitle}</h2>
+            <p className="mt-4 text-sm leading-6 text-[#506155]">40 trained disease classes</p>
           </div>
           <div className="grid grid-cols-2 border border-[#d7e3d1] sm:grid-cols-3 lg:grid-cols-4">
             {crops.map((crop, index) => (
