@@ -51,7 +51,8 @@ export function groupScansByDay(scans: ScanRecord[]): Map<string, DayScans> {
       map.set(key, { key, scans: [scan], hasDisease: false, allHealthy: true });
     }
   }
-  for (const day of map.values()) {
+  // for (const day of map.values()) {
+  for (const day of Array.from(map.values())) {
     day.hasDisease = day.scans.some((s) => !isHealthy(s.prediction.disease));
     day.allHealthy = day.scans.every((s) => isHealthy(s.prediction.disease));
     day.scans.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
@@ -131,7 +132,8 @@ export function computeStats(scans: ScanRecord[], today: Date): CalendarStats {
   }
   let topCrop: string | null = null;
   let topCount = 0;
-  for (const [crop, count] of cropCounts.entries()) {
+  // for (const [crop, count] of cropCounts.entries()) {
+  for (const [crop, count] of Array.from(cropCounts.entries())) {
     if (count > topCount) {
       topCount = count;
       topCrop = crop;
